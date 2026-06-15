@@ -7,12 +7,13 @@
     <style>
         :root {
             --bg-black: #121212;
-            --bg-dark-gray: #1E1E1E;
+            --bg-dark: #1E1E1E;
             --bg-card: #2A2A2A;
             --neon-yellow: #CCFF00;
             --bright-orange: #FF6600;
             --text-white: #FFFFFF;
             --text-gray: #E0E0E0;
+            --text-muted: #A0A0A0;
             --border-color: #333333;
         }
 
@@ -27,17 +28,18 @@
         }
 
         body {
-            font-family: 'Helvetica Neue', Arial, 'LiHei Pro', '微軟正黑體', sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans TC", sans-serif;
             background-color: var(--bg-black);
             color: var(--text-gray);
-            line-height: 1.7;
+            line-height: 1.8;
             -webkit-font-smoothing: antialiased;
         }
 
-        /* Navigation */
+        /* 導覽列 */
         nav {
             position: fixed;
             top: 0;
+            left: 0;
             width: 100%;
             background-color: rgba(18, 18, 18, 0.95);
             border-bottom: 2px solid var(--neon-yellow);
@@ -46,6 +48,7 @@
             overflow-x: auto;
             white-space: nowrap;
             padding: 12px 20px;
+            backdrop-filter: blur(5px);
         }
 
         nav a {
@@ -61,7 +64,7 @@
             color: var(--neon-yellow);
         }
 
-        /* Global Section Styles */
+        /* 區塊共用設定 */
         section {
             padding: 100px 20px 60px;
             max-width: 1000px;
@@ -86,54 +89,56 @@
             margin-bottom: 30px;
         }
 
-        .subtitle {
-            font-size: 1.25rem;
-            color: var(--text-gray);
-            margin-bottom: 40px;
-            border-left: 4px solid var(--neon-yellow);
-            padding-left: 15px;
-        }
-
         p { margin-bottom: 15px; font-size: 1.1rem; }
 
         .citation {
             color: var(--neon-yellow);
             font-family: monospace;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             background: rgba(204, 255, 0, 0.1);
-            padding: 2px 5px;
-            border-radius: 3px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin: 0 4px;
+            vertical-align: baseline;
         }
 
-        /* Chapter 1: Hero & Voting */
+        /* ================= 第一章：開場動態投票 ================= */
         .hero-section {
             background-color: var(--bg-black);
             border: 2px solid var(--neon-yellow);
-            padding: 50px 30px;
+            padding: 50px 40px;
             border-radius: 8px;
             margin-top: 20px;
-            position: relative;
-            box-shadow: 0 0 30px rgba(204, 255, 0, 0.1);
+            box-shadow: 0 0 30px rgba(204, 255, 0, 0.15);
         }
 
-        .voting-container {
-            background-color: var(--bg-dark-gray);
-            padding: 30px;
-            border-radius: 8px;
-            margin-top: 30px;
+        .hero-subtitle {
+            font-size: 1.25rem;
+            color: var(--text-gray);
+            margin-bottom: 40px;
+            border-left: 4px solid var(--bright-orange);
+            padding-left: 15px;
+        }
+
+        .voting-module {
+            background-color: var(--bg-dark);
             border: 1px solid var(--border-color);
+            padding: 35px;
+            border-radius: 8px;
+            margin-top: 40px;
         }
 
         .vote-question {
             font-size: 1.3rem;
             font-weight: bold;
             color: var(--text-white);
-            margin-bottom: 25px;
+            margin-bottom: 30px;
         }
 
-        .vote-btns {
+        .vote-buttons {
             display: flex;
             gap: 20px;
+            transition: opacity 0.4s ease;
         }
 
         .vote-btn {
@@ -142,72 +147,124 @@
             font-size: 1.5rem;
             font-weight: 900;
             cursor: pointer;
-            border: 2px solid var(--neon-yellow);
             background: transparent;
-            color: var(--neon-yellow);
             border-radius: 8px;
             transition: all 0.3s ease;
             text-align: center;
         }
 
-        .vote-btn:hover {
-            background: var(--neon-yellow);
-            color: var(--bg-black);
+        .vote-btn-a {
+            border: 2px solid var(--neon-yellow);
+            color: var(--neon-yellow);
         }
+        .vote-btn-a:hover { background: var(--neon-yellow); color: var(--bg-black); }
+
+        .vote-btn-b {
+            border: 2px solid #777;
+            color: #ccc;
+        }
+        .vote-btn-b:hover { background: #777; color: var(--text-white); }
 
         .vote-results {
             display: none;
+            opacity: 0;
+            transition: opacity 0.5s ease;
         }
 
-        .bar-wrap {
+        .bar-container {
             margin-bottom: 15px;
             background: var(--bg-black);
             border-radius: 4px;
-            height: 40px;
-            position: relative;
-            overflow: hidden;
+            height: 45px;
             border: 1px solid var(--border-color);
+            position: relative;
         }
 
         .bar-fill {
             height: 100%;
-            width: 0%; /* Dynamic fill */
+            width: 0%;
             transition: width 1.2s cubic-bezier(0.2, 0.8, 0.2, 1);
             display: flex;
             align-items: center;
             padding-left: 15px;
             font-weight: bold;
-            color: var(--bg-black);
+            font-size: 1.1rem;
             white-space: nowrap;
         }
 
-        .bar-fill.a { background-color: var(--neon-yellow); }
-        .bar-fill.b { background-color: #555555; color: var(--text-white); }
+        .bar-fill.a { background-color: var(--neon-yellow); color: var(--bg-black); }
+        .bar-fill.b { background-color: #444; color: var(--text-white); }
 
-        .vote-count-text {
-            color: #999;
-            font-size: 0.9rem;
+        .vote-meta {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            margin-top: 15px;
             text-align: right;
-            margin-top: 10px;
         }
 
         .expert-commentary {
             display: none;
-            margin-top: 25px;
-            padding: 20px;
+            margin-top: 30px;
+            padding: 20px 25px;
             background-color: rgba(255, 102, 0, 0.1);
             border-left: 4px solid var(--bright-orange);
             color: var(--text-white);
-            animation: slideDown 0.6s ease forwards;
+            font-size: 1.1rem;
+            line-height: 1.6;
         }
 
         @keyframes slideDown {
-            from { opacity: 0; transform: translateY(-20px); }
+            from { opacity: 0; transform: translateY(-15px); }
             to { opacity: 1; transform: translateY(0); }
         }
 
-        /* Chapter 4: Video Player & Dashboards */
-        .video-container {
+        /* ================= 共用卡片網格 ================= */
+        .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
+        .grid-4 { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; }
+        .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 20px; }
+
+        .static-card {
+            background-color: var(--bg-dark);
+            padding: 25px;
+            border-radius: 8px;
+            border-top: 4px solid var(--bright-orange);
+            border-bottom: 1px solid var(--border-color);
+            border-left: 1px solid var(--border-color);
+            border-right: 1px solid var(--border-color);
+        }
+
+        /* ================= 第三章：折疊機制 ================= */
+        .accordion {
+            background-color: var(--bg-dark);
+            border: 1px solid var(--border-color);
+            margin-bottom: 15px;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+        .accordion-header {
+            padding: 20px 25px;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 1.2rem;
+            color: var(--neon-yellow);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: var(--bg-card);
+        }
+        .accordion-body {
+            padding: 0 25px 25px;
+            display: none;
+            color: var(--text-gray);
+            background-color: var(--bg-dark);
+            margin-top: 15px;
+        }
+        .accordion.active .accordion-body { display: block; }
+        .accordion-header::after { content: '+'; font-size: 1.5rem; }
+        .accordion.active .accordion-header::after { content: '−'; }
+
+        /* ================= 第四章：Mock 影音與數據 ================= */
+        .mock-video-player {
             width: 100%;
             aspect-ratio: 16 / 9;
             background-color: #000;
@@ -220,96 +277,58 @@
             cursor: pointer;
             margin-bottom: 40px;
             transition: border-color 0.3s ease;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
         }
 
-        .video-container:hover {
-            border-color: var(--neon-yellow);
-        }
+        .mock-video-player:hover { border-color: var(--neon-yellow); }
 
         .play-icon {
             width: 0;
             height: 0;
-            border-top: 25px solid transparent;
-            border-bottom: 25px solid transparent;
-            border-left: 40px solid var(--neon-yellow);
+            border-top: 30px solid transparent;
+            border-bottom: 30px solid transparent;
+            border-left: 45px solid var(--neon-yellow);
             transition: transform 0.2s ease;
+            z-index: 2;
         }
 
-        .video-container:hover .play-icon {
-            transform: scale(1.1);
-        }
+        .mock-video-player:hover .play-icon { transform: scale(1.15); }
 
-        .video-hint {
+        .mock-video-text {
             position: absolute;
-            bottom: 20px;
-            background: rgba(0,0,0,0.7);
-            color: rgba(255,255,255,0.6);
-            padding: 5px 15px;
+            background: rgba(0,0,0,0.6);
+            color: var(--text-gray);
+            padding: 8px 20px;
             border-radius: 20px;
-            font-size: 0.9rem;
-        }
-
-        /* Grids & Cards */
-        .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
-        .grid-4 { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; }
-        .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 20px; }
-
-        .card {
-            background-color: var(--bg-dark-gray);
-            padding: 25px;
-            border-radius: 8px;
-            border-top: 4px solid var(--bright-orange);
+            font-size: 1rem;
+            bottom: 20px;
+            letter-spacing: 1px;
+            border: 1px solid #444;
         }
 
         .data-card {
-            background-color: var(--bg-dark-gray);
-            padding: 25px;
+            background-color: var(--bg-dark);
+            padding: 25px 20px;
             border-radius: 8px;
             text-align: center;
             border: 1px solid var(--border-color);
         }
         
         .data-card .number {
-            font-size: 2.5rem;
+            font-size: 2.2rem;
             color: var(--neon-yellow);
             font-weight: 900;
-            margin-bottom: 10px;
-            line-height: 1;
+            margin-bottom: 12px;
+            line-height: 1.1;
         }
 
-        /* Interactive Accordion */
-        .accordion {
-            background-color: var(--bg-dark-gray);
-            border: 1px solid var(--border-color);
-            margin-bottom: 10px;
-            border-radius: 4px;
-        }
-        .accordion-header {
-            padding: 20px;
-            cursor: pointer;
-            font-weight: bold;
-            font-size: 1.2rem;
-            color: var(--neon-yellow);
-            display: flex;
-            justify-content: space-between;
-        }
-        .accordion-body {
-            padding: 0 20px 20px;
-            display: none;
-            color: var(--text-gray);
-        }
-        .accordion.active .accordion-body { display: block; }
-
-        /* Flip Cards */
-        .flip-container {
-            perspective: 1000px;
-            height: 250px;
-        }
+        /* ================= 第五章：翻轉卡片 ================= */
+        .flip-container { perspective: 1000px; height: 260px; }
         .flip-inner {
             position: relative;
             width: 100%;
             height: 100%;
-            transition: transform 0.6s;
+            transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1);
             transform-style: preserve-3d;
             cursor: pointer;
         }
@@ -323,15 +342,16 @@
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            padding: 20px;
+            padding: 25px;
             border-radius: 8px;
             border: 1px solid var(--border-color);
         }
         .flip-front {
-            background-color: var(--bg-dark-gray);
+            background-color: var(--bg-dark);
             border-left: 4px solid var(--neon-yellow);
         }
-        .flip-front h3 { color: var(--neon-yellow); margin:0; }
+        .flip-front h3 { color: var(--neon-yellow); margin-bottom: 10px; text-align: center; }
+        .flip-front p { color: var(--text-muted); font-size: 0.9rem; margin: 0; }
         .flip-back {
             background-color: var(--bg-card);
             transform: rotateY(180deg);
@@ -340,142 +360,186 @@
             border-left: 4px solid var(--bright-orange);
         }
 
-        /* Stakeholder Tabs */
-        .tab-btn {
-            background: var(--bg-black);
-            color: var(--text-gray);
-            border: 1px solid var(--border-color);
-            padding: 8px 15px;
-            cursor: pointer;
-            border-radius: 4px;
-            margin-right: 10px;
+        /* ================= 第六章：人物切換卡片 ================= */
+        .tab-btn-group {
+            display: flex;
+            gap: 10px;
             margin-bottom: 15px;
         }
-        .tab-btn.active {
-            background: var(--neon-yellow);
-            color: var(--bg-black);
+        .tab-btn {
+            background: var(--bg-black);
+            color: var(--text-muted);
+            border: 1px solid var(--border-color);
+            padding: 8px 16px;
+            cursor: pointer;
+            border-radius: 4px;
             font-weight: bold;
+            transition: all 0.2s ease;
         }
-        .tab-content { min-height: 80px; }
+        .tab-btn.active {
+            background: var(--text-white);
+            color: var(--bg-black);
+            border-color: var(--text-white);
+        }
+        .tab-content {
+            font-size: 1.05rem;
+            min-height: 80px;
+            color: var(--text-gray);
+        }
 
-        /* Table */
-        .table-responsive { overflow-x: auto; }
+        /* ================= 第七章：服務藍圖 ================= */
+        .table-responsive { overflow-x: auto; border-radius: 8px; border: 1px solid var(--border-color); }
         table {
             width: 100%;
-            min-width: 800px;
+            min-width: 700px;
             border-collapse: collapse;
-            background: var(--bg-dark-gray);
+            background: var(--bg-dark);
         }
         th, td {
-            padding: 15px;
+            padding: 20px;
             text-align: left;
-            border: 1px solid var(--border-color);
+            border-bottom: 1px solid var(--border-color);
+            vertical-align: top;
         }
-        th { color: var(--neon-yellow); }
-        .pain-row { color: #ff6b6b; }
-        .solution-row { color: #51cf66; }
+        th { background-color: var(--bg-card); color: var(--neon-yellow); font-size: 1.1rem; }
+        tr:last-child td { border-bottom: none; }
+        .pain-cell { color: #ff6b6b; background-color: rgba(255, 107, 107, 0.03); }
+        .solution-cell { color: #51cf66; background-color: rgba(81, 207, 102, 0.05); }
 
-        /* Sortable List */
-        .sortable-list { list-style: none; margin-bottom: 20px; }
+        /* ================= 第八章：排序挑戰 ================= */
+        .sort-list { list-style: none; margin-bottom: 25px; }
         .sort-item {
             background: var(--bg-card);
-            padding: 15px;
-            margin-bottom: 10px;
+            padding: 18px 20px;
+            margin-bottom: 12px;
             border: 1px solid var(--border-color);
             display: flex;
             justify-content: space-between;
             align-items: center;
-            border-radius: 4px;
+            border-radius: 6px;
+            font-weight: bold;
         }
         .sort-controls button {
             background: var(--bg-black);
-            color: var(--text-gray);
+            color: var(--text-muted);
             border: 1px solid var(--border-color);
-            padding: 5px 10px;
+            padding: 6px 12px;
             cursor: pointer;
             margin-left: 5px;
+            border-radius: 4px;
         }
-        .sort-controls button:hover { color: var(--neon-yellow); }
-
-        /* Generic Button */
-        .btn {
+        .sort-controls button:hover { color: var(--neon-yellow); border-color: var(--neon-yellow); }
+        .submit-btn {
             background: transparent;
             color: var(--neon-yellow);
             border: 2px solid var(--neon-yellow);
-            padding: 10px 20px;
+            padding: 12px 25px;
             cursor: pointer;
-            font-size: 1rem;
+            font-size: 1.05rem;
             font-weight: bold;
             border-radius: 4px;
+            transition: all 0.2s ease;
+            display: block;
+            margin: 0 auto;
         }
-        .btn:hover { background: var(--neon-yellow); color: var(--bg-black); }
+        .submit-btn:hover { background: var(--neon-yellow); color: var(--bg-black); }
+        
+        .sort-feedback {
+            display: none;
+            margin-top: 25px;
+            padding: 20px;
+            background-color: rgba(204, 255, 0, 0.08);
+            border-left: 4px solid var(--neon-yellow);
+            font-size: 1.1rem;
+            line-height: 1.6;
+        }
 
-        /* 2D Matrix Chart */
-        .matrix-container {
+        /* ================= 第九章：二維矩陣圖 ================= */
+        .matrix-wrapper {
+            background-color: var(--bg-dark);
+            padding: 40px 30px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+        .matrix-canvas {
             width: 100%;
-            height: 400px;
-            background-color: var(--bg-dark-gray);
+            height: 450px;
             position: relative;
             border-left: 2px dashed #666;
             border-bottom: 2px dashed #666;
-            margin-top: 30px;
-            margin-bottom: 20px;
+            margin-bottom: 40px;
+            background: rgba(0,0,0,0.2);
         }
         .axis-label {
             position: absolute;
             color: var(--bright-orange);
-            font-size: 0.9rem;
+            font-size: 0.95rem;
             font-weight: bold;
         }
         .y-axis { top: -25px; left: -10px; }
         .x-axis { bottom: -25px; right: 0; }
         .matrix-point {
             position: absolute;
-            width: 16px;
-            height: 16px;
-            background-color: var(--text-gray);
+            width: 18px;
+            height: 18px;
+            background-color: var(--text-muted);
             border-radius: 50%;
             transform: translate(-50%, 50%);
             cursor: pointer;
-            transition: all 0.3s;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            z-index: 5;
         }
-        .matrix-point:hover { transform: translate(-50%, 50%) scale(1.5); background-color: var(--neon-yellow); }
-        .matrix-point.hyrox-point { background-color: var(--neon-yellow); box-shadow: 0 0 10px var(--neon-yellow); }
+        .matrix-point:hover, .matrix-point.active {
+            transform: translate(-50%, 50%) scale(1.5);
+            background-color: var(--neon-yellow);
+            z-index: 10;
+        }
+        .matrix-point.hyrox-point { 
+            background-color: var(--neon-yellow); 
+            box-shadow: 0 0 15px var(--neon-yellow); 
+        }
         .point-label {
             position: absolute;
-            bottom: 20px;
+            bottom: 25px;
             left: 50%;
             transform: translateX(-50%);
             background: var(--bg-black);
-            padding: 3px 8px;
-            font-size: 0.8rem;
+            padding: 4px 10px;
+            font-size: 0.85rem;
             border: 1px solid var(--border-color);
             white-space: nowrap;
+            border-radius: 4px;
+            color: var(--text-white);
         }
-        .chart-tooltip {
+        .matrix-point:hover .point-label, .matrix-point.active .point-label {
+            border-color: var(--neon-yellow);
+            color: var(--neon-yellow);
+        }
+        .chart-inspector {
             background: var(--bg-card);
-            padding: 15px;
-            border-left: 3px solid var(--neon-yellow);
-            min-height: 60px;
+            padding: 20px;
+            border-left: 4px solid var(--neon-yellow);
+            min-height: 70px;
+            font-size: 1.05rem;
         }
 
         @media (max-width: 768px) {
-            h1 { font-size: 1.8rem; }
-            .vote-btns { flex-direction: column; }
+            h1 { font-size: 2rem; }
+            .vote-buttons { flex-direction: column; }
         }
     </style>
 </head>
 <body>
 
     <nav>
-        <a href="#ch1">1. 開場問題</a>
+        <a href="#ch1">1. 開場引入</a>
         <a href="#ch2">2. 背景轉型</a>
         <a href="#ch3">3. 核心機制</a>
         <a href="#ch4">4. 數據與影音</a>
         <a href="#ch5">5. 四維矩陣</a>
         <a href="#ch6">6. 利害關係人</a>
         <a href="#ch7">7. 服務藍圖</a>
-        <a href="#ch8">8. 導入策略</a>
+        <a href="#ch8">8. 互動挑戰</a>
         <a href="#ch9">9. 競爭定位</a>
         <a href="#ch10">10. 未來情境</a>
         <a href="#ch11">11. 結論</a>
@@ -484,24 +548,24 @@
     <section id="ch1">
         <div class="hero-section">
             <h1>台灣中小型健身房的轉型實驗：<br><span>導入 HYROX 是救命仙丹，還是蜜糖毒藥？ <span class="citation">[1]</span></span></h1>
-            <p class="subtitle">這不是引進幾台雪橇機的硬體升級，而是重塑會員黏性、教練產值與賽事經濟的商業重構 <span class="citation">[3, 16]</span>。</p>
+            <p class="hero-subtitle">這不是引進幾台雪橇機的硬體升級，而是重塑會員黏性、教練產值與賽事經濟的商業重構 <span class="citation">[3, 16]</span>。</p>
 
-            <div class="voting-container">
+            <div class="voting-module">
                 <div class="vote-question">全球都在瘋 HYROX！對於空間與資金有限的中小型健身房來說，引進這種「舉重馬拉松」體能賽到底會賺還是不會賺？</div>
                 
-                <div class="vote-btns" id="vote-btns-container">
-                    <button class="vote-btn" onclick="submitVote('A')">會賺！</button>
-                    <button class="vote-btn" onclick="submitVote('B')" style="border-color: #777; color: #ccc;">不會賺！</button>
+                <div class="vote-buttons" id="vote-btns">
+                    <button class="vote-btn vote-btn-a" onclick="castVote('A')">會賺！</button>
+                    <button class="vote-btn vote-btn-b" onclick="castVote('B')">不會賺！空</button>
                 </div>
 
-                <div class="vote-results" id="vote-results-container">
-                    <div class="bar-wrap">
-                        <div class="bar-fill a" id="bar-a">選項 A：會賺！ (42%)</div>
+                <div class="vote-results" id="vote-results">
+                    <div class="bar-container">
+                        <div class="bar-fill a" id="bar-a">選項 A（會賺） 42%</div>
                     </div>
-                    <div class="bar-wrap">
-                        <div class="bar-fill b" id="bar-b">選項 B：不會賺！ (58%)</div>
+                    <div class="bar-container">
+                        <div class="bar-fill b" id="bar-b">選項 B（不會賺） 58%</div>
                     </div>
-                    <div class="vote-count-text">目前已有 314 位健身房主與教練參與投票</div>
+                    <div class="vote-meta">目前已有 314 位健身房主與教練參與投票</div>
                 </div>
 
                 <div class="expert-commentary" id="expert-comment">
@@ -515,37 +579,37 @@
     <section id="ch2">
         <h2>二、背景：台灣健身房為何需要轉型</h2>
         <div class="grid-3">
-            <div class="card">
+            <div class="static-card">
                 <h3>【供給端大飽和】</h3>
-                <p>2025年全國健身中心達 1,113 家，單店月營收下滑，面臨大型連鎖以標準化 SOP 與低月費的無情擠壓 <span class="citation">[6]</span>。</p>
+                <p style="margin:0; font-size: 1rem;">2025年全國健身中心達 1,113 家，單店月營收下滑，面臨大型連鎖以標準化 SOP 與低月費的無情擠壓 <span class="citation">[6]</span>。</p>
             </div>
-            <div class="card">
+            <div class="static-card">
                 <h3>【一對一私教失靈】</h3>
-                <p>傳統工作室依賴的私教模式陷入價格戰，且政府全面收緊預收款信託法規，傳統現金流槓桿受限 <span class="citation">[6, 18]</span>。</p>
+                <p style="margin:0; font-size: 1rem;">傳統工作室依賴的私教模式陷入價格戰，且政府全面收緊預收款信託法規，傳統現金流槓桿受限 <span class="citation">[6, 18]</span>。</p>
             </div>
-            <div class="card">
+            <div class="static-card">
                 <h3>【需求端巨變】</h3>
-                <p>從追求「孤獨重訓、體態美學」轉向「功能性體能」與追求一群人一起跑的「社群陪伴感」 <span class="citation">[4, 5, 7]</span>。</p>
+                <p style="margin:0; font-size: 1rem;">從「孤獨重訓」轉向與追求一群人一起運動的「社群陪伴感」 <span class="citation">[4, 5, 7]</span>。</p>
             </div>
         </div>
     </section>
 
     <section id="ch3">
         <h2>三、機制：HYROX 核心商業與產品力</h2>
-        <div class="accordion" onclick="toggleAccordion(this)">
-            <div class="accordion-header">1. 【低門檻與標準化】 <span>+</span></div>
+        <div class="accordion" onclick="toggleAcc(this)">
+            <div class="accordion-header">1. 【低門檻與標準化】</div>
             <div class="accordion-body">
                 <p>移除 CrossFit 高難度的抓挺舉與體操 <span class="citation">[2, 7]</span>，改用推、拉、跑、跳等自然動作，群眾完賽率高達 98% <span class="citation">[19]</span>。</p>
             </div>
         </div>
-        <div class="accordion" onclick="toggleAccordion(this)">
-            <div class="accordion-header">2. 【賽事經濟與 Gym Finder】 <span>+</span></div>
+        <div class="accordion" onclick="toggleAcc(this)">
+            <div class="accordion-header">2. 【賽事經濟與 Gym Finder】</div>
             <div class="accordion-body">
                 <p>每年 1,500 美元加盟費 <span class="citation">[8]</span>。官方地圖會將賽事報名者導流至認證場館，創造精準的「賽前備賽流量」 <span class="citation">[8]</span>。</p>
             </div>
         </div>
-        <div class="accordion" onclick="toggleAccordion(this)">
-            <div class="accordion-header">3. 【空間替代機制】 <span>+</span></div>
+        <div class="accordion" onclick="toggleAcc(this)">
+            <div class="accordion-header">3. 【空間替代機制】</div>
             <div class="accordion-body">
                 <p>用無動力跑步機推行替代 50 米雪橇跑道 <span class="citation">[9]</span>；用啞鈴火箭推替代 3 米高牆球 <span class="citation">[9, 17]</span>。克服中小型場館的空間死穴。</p>
             </div>
@@ -555,34 +619,34 @@
     <section id="ch4">
         <h2>四、數據：關鍵指標與前線訪談影音儀表板</h2>
         
-        <h3>【前線大使與選手質性訪談影音】</h3>
+        <h3 style="color: var(--text-white);">【前線大使與選手質性訪談影音】</h3>
         <p>校園大使喬喬指出，跑團客群（以心肺為主）比傳統健美客更容易、也更願意投入 HYROX 的社交氛圍中 <span class="citation">[4, 20]</span>。</p>
         
-        <div class="video-container" onclick="playVideoAlert()">
+        <div class="mock-video-player" onclick="playMockVideo()">
             <div class="play-icon"></div>
-            <div class="video-hint">【前線訪談精華：影音後製剪輯中】</div>
+            <div class="mock-video-text">【前線訪談精華：影音後製剪輯中】</div>
         </div>
 
         <div class="grid-4">
             <div class="data-card">
                 <div class="number">1,113 家</div>
-                <h4>全國健身房總數 <span class="citation">[6]</span></h4>
-                <p style="font-size: 0.9rem; margin-top:10px;">市場極度擁擠，傳統模式難以生存。</p>
+                <h4 style="color:var(--text-white);">全國健身房總數 <span class="citation">[6]</span></h4>
+                <p style="font-size: 0.9rem; margin-top:8px;">市場極度擁擠，傳統模式難以生存。</p>
             </div>
             <div class="data-card">
                 <div class="number">98%</div>
-                <h4>大眾普及度 <span class="citation">[19]</span></h4>
-                <p style="font-size: 0.9rem; margin-top:10px;">相比高技術門檻運動，適合15歲到70歲以上大眾。</p>
+                <h4 style="color:var(--text-white);">大眾普及度 <span class="citation">[19]</span></h4>
+                <p style="font-size: 0.9rem; margin-top:8px;">相比高技術門檻運動，它適合15歲到70歲以上大眾。</p>
             </div>
             <div class="data-card">
-                <div class="number" style="font-size: 1.8rem; padding: 10px 0;">跑團轉化率高</div>
-                <h4>前線大使觀察 <span class="citation">[20]</span></h4>
-                <p style="font-size: 0.9rem; margin-top:10px;">跑團客群比傳統健美客更容易投入社交氛圍中 <span class="citation">[4, 20]</span>。</p>
+                <div class="number" style="font-size: 1.6rem; padding: 10px 0;">跑團轉化率更高</div>
+                <h4 style="color:var(--text-white);">前線大使觀察 <span class="citation">[20]</span></h4>
+                <p style="font-size: 0.9rem; margin-top:8px;">跑團客群比傳統健美客更容易投入社交氛圍中 <span class="citation">[4, 20]</span>。</p>
             </div>
             <div class="data-card">
-                <div class="number" style="font-size: 1.8rem; padding: 10px 0;">連鎖進場</div>
-                <h4>市場競爭加劇 <span class="citation">[21, 22]</span></h4>
-                <p style="font-size: 0.9rem; margin-top:10px;">健身工廠等已設立專區，中小型場館必須靠社群差異化突圍 <span class="citation">[22, 23]</span>。</p>
+                <div class="number" style="font-size: 1.6rem; padding: 10px 0;">大型連鎖進場</div>
+                <h4 style="color:var(--text-white);">市場競爭加劇 <span class="citation">[21, 22]</span></h4>
+                <p style="font-size: 0.9rem; margin-top:8px;">健身工廠等已設立專區，中小型場館需靠社群差異化突圍 <span class="citation">[22, 23]</span>。</p>
             </div>
         </div>
     </section>
@@ -590,7 +654,7 @@
     <section id="ch5">
         <h2>五、概念：四維經營矩陣（核心影響評估）</h2>
         <div class="grid-2">
-            <div class="flip-container">
+            <div class="flip-container" onclick="this.classList.toggle('flipped')">
                 <div class="flip-inner">
                     <div class="flip-front">
                         <h3>財務營收 (Revenue)</h3>
@@ -601,7 +665,7 @@
                     </div>
                 </div>
             </div>
-            <div class="flip-container">
+            <div class="flip-container" onclick="this.classList.toggle('flipped')">
                 <div class="flip-inner">
                     <div class="flip-front">
                         <h3>空間坪效 (Spatial Efficiency)</h3>
@@ -612,7 +676,7 @@
                     </div>
                 </div>
             </div>
-            <div class="flip-container">
+            <div class="flip-container" onclick="this.classList.toggle('flipped')">
                 <div class="flip-inner">
                     <div class="flip-front">
                         <h3>顧客黏著度 (Retention)</h3>
@@ -623,7 +687,7 @@
                     </div>
                 </div>
             </div>
-            <div class="flip-container">
+            <div class="flip-container" onclick="this.classList.toggle('flipped')">
                 <div class="flip-inner">
                     <div class="flip-front">
                         <h3>人力資本 (Human Resources)</h3>
@@ -640,28 +704,36 @@
     <section id="ch6">
         <h2>六、利害關係人：誰受益，誰承擔成本</h2>
         <div class="grid-2">
-            <div class="card">
-                <h3>【中小型健身房老闆】</h3>
-                <button class="tab-btn active" onclick="switchTab(this, '收益是精準流量與高毛利備賽營 [10]；')">收益</button>
-                <button class="tab-btn" onclick="switchTab(this, '風險是賽季結束後的「賽後低谷」與退會潮 [1]；')">風險</button>
+            <div class="static-card" style="border-top-color: #3498db;">
+                <h3 style="color: #3498db;">【中小型健身房老闆】</h3>
+                <div class="tab-btn-group">
+                    <button class="tab-btn active" onclick="switchTab(this, '收益是精準流量與高毛利備賽營 [10]；')">收益</button>
+                    <button class="tab-btn" onclick="switchTab(this, '風險是賽季結束後的「賽後低谷」與退會潮 [1]；')">風險</button>
+                </div>
                 <div class="tab-content">收益是精準流量與高毛利備賽營 <span class="citation">[10]</span>；</div>
             </div>
-            <div class="card">
-                <h3>【健身教練】</h3>
-                <button class="tab-btn active" onclick="switchTab(this, '收益是能快速上線高產值團課；')">收益</button>
-                <button class="tab-btn" onclick="switchTab(this, '成本是需重新學習賽季配速與新法規判罰細節 [13, 24]；')">成本</button>
+            <div class="static-card" style="border-top-color: #9b59b6;">
+                <h3 style="color: #9b59b6;">【健身教練】</h3>
+                <div class="tab-btn-group">
+                    <button class="tab-btn active" onclick="switchTab(this, '收益是能快速上線高產值團課；')">收益</button>
+                    <button class="tab-btn" onclick="switchTab(this, '成本是需重新學習賽季配速與新法規判罰細節 [13, 24]；')">成本</button>
+                </div>
                 <div class="tab-content">收益是能快速上線高產值團課；</div>
             </div>
-            <div class="card">
-                <h3>【尋求突破的運動客/跑團】</h3>
-                <button class="tab-btn active" onclick="switchTab(this, '收益是獲得減脂效果 [25]、持久心率訓練與強烈的運動社交歸屬感 [4]；')">收益</button>
-                <button class="tab-btn" onclick="switchTab(this, '成本是需支付較高的備賽課程溢價 [24]；')">成本</button>
+            <div class="static-card" style="border-top-color: #2ecc71;">
+                <h3 style="color: #2ecc71;">【尋求突破的運動客/跑團】</h3>
+                <div class="tab-btn-group">
+                    <button class="tab-btn active" onclick="switchTab(this, '收益是獲得減脂效果 [25]、持久心率訓練與強烈的運動社交歸屬感 [4]；')">收益</button>
+                    <button class="tab-btn" onclick="switchTab(this, '成本是需支付較高的備賽課程溢價 [24]；')">成本</button>
+                </div>
                 <div class="tab-content">收益是獲得減脂效果 <span class="citation">[25]</span>、持久心率訓練與強烈的運動社交歸屬感 <span class="citation">[4]</span>；</div>
             </div>
-            <div class="card">
-                <h3>【傳統健美愛好者】</h3>
-                <button class="tab-btn active" onclick="switchTab(this, '收益是獲得更全面的心肺功能；')">收益</button>
-                <button class="tab-btn" onclick="switchTab(this, '限制是 HYROX 無法取代重訓帶來的「肌肥大」效果，追求極致體態仍需傳統重訓相輔相成 [26, 27]；')">限制</button>
+            <div class="static-card" style="border-top-color: #e74c3c;">
+                <h3 style="color: #e74c3c;">【傳統健美愛好者】</h3>
+                <div class="tab-btn-group">
+                    <button class="tab-btn active" onclick="switchTab(this, '收益是獲得更全面的心肺功能；')">收益</button>
+                    <button class="tab-btn" onclick="switchTab(this, '限制是 HYROX 無法取代重訓帶來的「肌肥大」效果，追求極致體態仍需傳統重訓相輔相成 [26, 27]；')">限制</button>
+                </div>
                 <div class="tab-content">收益是獲得更全面的心肺功能；</div>
             </div>
         </div>
@@ -673,21 +745,21 @@
             <table>
                 <thead>
                     <tr>
-                        <th>情境</th>
-                        <th>傳統健身房痛點</th>
-                        <th>認證場館解決方案</th>
+                        <th width="30%">場景對比</th>
+                        <th width="35%">傳統健身房痛點</th>
+                        <th width="35%">認證場館解決方案</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr>
-                        <td>環境與噪音</td>
-                        <td class="pain-row">在傳統健身房推雪橇會被經理制止怕吵、缺乏長草皮 <span class="citation">[28]</span></td>
-                        <td class="solution-row">認證場館提供專屬厚彈橡膠地墊、合規器材 <span class="citation">[24]</span></td>
+                        <td><strong>器材支援與噪音</strong></td>
+                        <td class="pain-cell">在傳統健身房推雪橇會被經理制止怕吵、缺乏長草皮 <span class="citation">[28]</span></td>
+                        <td class="solution-cell">認證場館提供專屬厚彈橡膠地墊、合規器材 <span class="citation">[24]</span></td>
                     </tr>
                     <tr>
-                        <td>動線與器材轉換</td>
-                        <td class="pain-row">做完划船機要跑下樓搶跑步機，無法完成連續心肺轉換 (Compromised Running) <span class="citation">[28]</span></td>
-                        <td class="solution-row">一站式不被打擾的模擬賽體驗，使消費者願意支付單次 800-1200 台幣的溢價門票 <span class="citation">[24]</span></td>
+                        <td><strong>連續心肺轉換</strong></td>
+                        <td class="pain-cell">做完划船機要跑下樓搶跑步機，無法完成連續心肺轉換 (Compromised Running) <span class="citation">[28]</span></td>
+                        <td class="solution-cell">一站式不被打擾的模擬賽體驗，使消費者願意支付單次 800-1200 台幣的溢價門票 <span class="citation">[24]</span></td>
                     </tr>
                 </tbody>
             </table>
@@ -698,73 +770,75 @@
         <h2>八、互動挑戰：不同坪數的導入策略</h2>
         <p>如果你是「中型微連鎖場館（100-180坪）」，最適當的引進策略三步驟為何？ <span class="citation">[29]</span></p>
         
-        <div class="card" style="margin-top: 20px;">
-            <ul class="sortable-list" id="sort-list">
+        <div class="static-card" style="border-top: none;">
+            <ul class="sort-list" id="sort-list">
+                <li class="sort-item">
+                    <span>極簡硬體優化：控制預算在 20 萬內，買 1-2 台 SkiErg 與鋪設 12.5 米草皮</span>
+                    <div class="sort-controls">
+                        <button onclick="moveUp(this)">▲ 上移</button>
+                        <button onclick="moveDown(this)">▼ 下移</button>
+                    </div>
+                </li>
                 <li class="sort-item">
                     <span>推動三軌課程：常規循環課留客、12週備賽營爆發營收、週末模擬賽私教弱點突破</span>
                     <div class="sort-controls">
-                        <button onclick="moveUp(this)">▲</button>
-                        <button onclick="moveDown(this)">▼</button>
+                        <button onclick="moveUp(this)">▲ 上移</button>
+                        <button onclick="moveDown(this)">▼ 下移</button>
                     </div>
                 </li>
                 <li class="sort-item">
                     <span>在 Portal 註冊加盟：取得 Gym Finder 地點導流</span>
                     <div class="sort-controls">
-                        <button onclick="moveUp(this)">▲</button>
-                        <button onclick="moveDown(this)">▼</button>
-                    </div>
-                </li>
-                <li class="sort-item">
-                    <span>極簡硬體優化：控制預算在 20 萬內，買 1-2 台 SkiErg 與鋪設 12.5 米草皮</span>
-                    <div class="sort-controls">
-                        <button onclick="moveUp(this)">▲</button>
-                        <button onclick="moveDown(this)">▼</button>
+                        <button onclick="moveUp(this)">▲ 上移</button>
+                        <button onclick="moveDown(this)">▼ 下移</button>
                     </div>
                 </li>
             </ul>
-            <button class="btn" onclick="submitSort()">確認提交順序</button>
-            <div id="sort-feedback" class="expert-commentary" style="margin-top: 15px;"></div>
+            <button class="submit-btn" onclick="submitSort()">提交策略組合</button>
+            <div id="sort-feedback" class="sort-feedback"></div>
         </div>
     </section>
 
     <section id="ch9">
         <h2>九、競爭定位：混合體能市場比較</h2>
-        <p>點擊定位點查看詳細比較 <span class="citation">[3, 15]</span></p>
+        <p>點擊座標圖中的亮點圓圈，即可啟動分析儀表板查看該體能模式的技術門檻與社群穿透力 <span class="citation">[3, 15]</span>：</p>
         
-        <div class="matrix-container">
-            <span class="axis-label y-axis">大眾完賽與社群普及率 (高) ↑</span>
-            <span class="axis-label x-axis">技術與學習門檻 (高) →</span>
-            
-            <div class="matrix-point" style="bottom: 40%; left: 80%;" onclick="showChartDetails('CrossFit：抓挺舉體操門檻極高，受傷風險大 [2]。')">
-                <span class="point-label">CrossFit</span>
+        <div class="matrix-wrapper">
+            <div class="matrix-canvas">
+                <span class="axis-label y-axis">大眾完賽與社群普及率 (高) ↑</span>
+                <span class="axis-label x-axis">技術與學習門檻 (高) →</span>
+                
+                <div class="matrix-point" style="bottom: 40%; left: 80%;" onclick="inspectChart(this, '【CrossFit】：抓挺舉體操門檻極高，受傷風險大 [2]。')">
+                    <span class="point-label">CrossFit</span>
+                </div>
+                
+                <div class="matrix-point" style="bottom: 70%; left: 30%;" onclick="inspectChart(this, '【F45】：門檻低，但缺乏外部大型實體賽事的「剛性備賽驅動力」 [3]。')">
+                    <span class="point-label">F45</span>
+                </div>
+                
+                <div class="matrix-point" style="bottom: 25%; left: 50%;" onclick="inspectChart(this, '【傳統重訓】：單關節肌肥大為主，偏向單人孤獨訓練 [4, 23]。')">
+                    <span class="point-label">傳統重訓</span>
+                </div>
+                
+                <div class="matrix-point hyrox-point" style="bottom: 90%; left: 20%;" onclick="inspectChart(this, '【HYROX】：跑、跳、推等自然動作門檻低， 98% 完賽率，極強社群屬性 [2, 19]。')">
+                    <span class="point-label" style="border-color: var(--neon-yellow); color: var(--neon-yellow);">HYROX</span>
+                </div>
             </div>
             
-            <div class="matrix-point" style="bottom: 70%; left: 30%;" onclick="showChartDetails('F45：門檻低，但缺乏外部大型實體賽事的「剛性備賽驅動力」 [3]。')">
-                <span class="point-label">F45</span>
+            <div id="chart-inspector" class="chart-inspector">
+                💡 請點擊上方圖表節點查看市場競爭細節說明。
             </div>
-            
-            <div class="matrix-point" style="bottom: 25%; left: 50%;" onclick="showChartDetails('傳統重訓：單關節肌肥大為主，偏向單人孤獨訓練 [4, 23]。')">
-                <span class="point-label">傳統重訓</span>
-            </div>
-            
-            <div class="matrix-point hyrox-point" style="bottom: 90%; left: 20%;" onclick="showChartDetails('HYROX：跑、跳、推等自然動作門檻低， 98% 完賽率，極強社群屬性 [2, 19]。')">
-                <span class="point-label">HYROX</span>
-            </div>
-        </div>
-        
-        <div id="chart-tooltip" class="chart-tooltip">
-            請點擊上方圖表節點查看說明。
         </div>
     </section>
 
     <section id="ch10">
         <h2>十、未來情境：順利擴站 vs 蜜糖毒藥</h2>
         <div class="grid-2">
-            <div class="card" style="border-top-color: #51cf66;">
+            <div class="static-card" style="border-top-color: #51cf66;">
                 <h3 style="color: #51cf66;">【情境一：救命仙丹（成功）】</h3>
                 <p>場館精準掌握備賽週期，以社群為基底，成功讓會員續約備戰下一場賽事，流失率降至極低 <span class="citation">[1, 12]</span>。</p>
             </div>
-            <div class="card" style="border-top-color: #ff6b6b;">
+            <div class="static-card" style="border-top-color: #ff6b6b;">
                 <h3 style="color: #ff6b6b;">【情境二：蜜糖毒藥（失敗）】</h3>
                 <p>老闆盲目投入 300-500 萬砸硬體改裝，賽季結束後未妥善規劃銜接，遭遇大量退會（賽後低谷），現金流枯竭 <span class="citation">[1]</span>。</p>
             </div>
@@ -773,7 +847,7 @@
 
     <section id="ch11" style="border-bottom: none;">
         <h2>十一、結論：短期流量與長期護城河</h2>
-        <div class="card" style="border-top: none; border-left: 4px solid var(--neon-yellow);">
+        <div class="static-card" style="border-top: none; border-left: 4px solid var(--neon-yellow);">
             <p><strong>1. 短期來看：</strong>HYROX 能靠賽事光環直接解決中小型場館「獲客難」與「留存低」的死穴 <span class="citation">[1]</span>。</p>
             <p><strong>2. 長期來看：</strong>HYROX 的核心魅力不在雪橇或草皮，而在「戰友革命情感」與「明確的賽事目標」 <span class="citation">[30]</span>。</p>
             <p><strong>3. 最終呼籲：</strong>用極輕資產啟動，用社群先行凝聚流量，才是台灣中小型健身房在戰國時代突出重圍的黃金法則 <span class="citation">[17, 30]</span>。</p>
@@ -781,26 +855,42 @@
     </section>
 
     <script>
-        // Chapter 1: Voting Logic
-        function submitVote(choice) {
-            document.getElementById('vote-btns-container').style.display = 'none';
-            const results = document.getElementById('vote-results-container');
-            results.style.display = 'block';
-            
-            // Trigger animation slightly after display block
-            setTimeout(() => {
-                document.getElementById('bar-a').style.width = '42%';
-                document.getElementById('bar-b').style.width = '58%';
-            }, 50);
+        // Chapter 1: Dynamic Voting
+        function castVote(choice) {
+            const btns = document.getElementById('vote-btns');
+            const results = document.getElementById('vote-results');
+            const expert = document.getElementById('expert-comment');
 
-            // Slide down commentary
+            // 1. Fade out buttons
+            btns.style.opacity = '0';
+            
             setTimeout(() => {
-                document.getElementById('expert-comment').style.display = 'block';
-            }, 800);
+                // 2. Hide buttons, show results block
+                btns.style.display = 'none';
+                results.style.display = 'block';
+                
+                // Trigger CSS reflow to ensure animation runs
+                void results.offsetWidth; 
+                results.style.opacity = '1';
+
+                // 3. Animate bars
+                setTimeout(() => {
+                    document.getElementById('bar-a').style.width = '42%';
+                    document.getElementById('bar-b').style.width = '58%';
+                }, 100);
+
+                // 4. Slide down expert commentary
+                setTimeout(() => {
+                    expert.style.display = 'block';
+                    // Scroll to see the comment if needed
+                    expert.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }, 1000);
+
+            }, 400); // Wait for fade out
         }
 
         // Chapter 3: Accordion
-        function toggleAccordion(el) {
+        function toggleAcc(el) {
             const isActive = el.classList.contains('active');
             document.querySelectorAll('.accordion').forEach(acc => acc.classList.remove('active'));
             if (!isActive) {
@@ -808,8 +898,8 @@
             }
         }
 
-        // Chapter 4: Video Alert
-        function playVideoAlert() {
+        // Chapter 4: Mock Video Player Alert
+        function playMockVideo() {
             alert('影音串流加載中：本訪談將於正式報告時上線，展示內容包含選手在常規場館備賽之痛點引證 [20, 24]。');
         }
 
@@ -818,10 +908,10 @@
             const parent = btn.parentElement;
             parent.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
-            parent.querySelector('.tab-content').innerHTML = text;
+            parent.nextElementSibling.innerHTML = text;
         }
 
-        // Chapter 8: Sorting
+        // Chapter 8: List Sorting
         function moveUp(btn) {
             const li = btn.closest('li');
             if (li.previousElementSibling) {
@@ -839,12 +929,28 @@
         function submitSort() {
             const feedback = document.getElementById('sort-feedback');
             feedback.style.display = 'block';
-            feedback.innerHTML = `<strong>正確三步驟藍圖：</strong><br>1. 即刻在 Portal 註冊加盟取得地圖導流 <span class="citation">[29]</span>。<br>2. 極簡硬體優化，控制預算在 20 萬內買器材與鋪草皮 <span class="citation">[29]</span>。<br>3. 推動三軌課程（常規課、12週備賽營、週末模擬賽）全面爆發營收 <span class="citation">[29]</span>。`;
+            feedback.style.animation = 'slideDown 0.5s ease';
+            feedback.innerHTML = `<strong>【戰略部署解析】</strong><br><br>「正確三步驟藍圖：<br>1. 即刻在 Portal 註冊加盟取得地圖導流 <span class="citation">[29]</span>。<br>2. 極簡硬體優化，控制預算在 20 萬內買器材與鋪草皮 <span class="citation">[29]</span>。<br>3. 推動三軌課程（常規課、12週備賽營、週末模擬賽）全面爆發營收 <span class="citation">[29]</span>。」`;
         }
 
-        // Chapter 9: Chart Tooltip
-        function showChartDetails(text) {
-            document.getElementById('chart-tooltip').innerHTML = '<strong>' + text + '</strong>';
+        // Chapter 9: 2D Matrix Inspector
+        function inspectChart(el, text) {
+            // Remove active class from all points
+            document.querySelectorAll('.matrix-point').forEach(p => {
+                p.classList.remove('active');
+            });
+            // Add to clicked
+            el.classList.add('active');
+            
+            const inspector = document.getElementById('chart-inspector');
+            inspector.innerHTML = `<strong>💡 數據解析：</strong><br>` + text;
+            
+            // Simple visual bump
+            inspector.style.opacity = '0.5';
+            setTimeout(() => {
+                inspector.style.opacity = '1';
+                inspector.style.transition = 'opacity 0.3s ease';
+            }, 50);
         }
     </script>
 </body>
