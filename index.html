@@ -753,4 +753,99 @@
         </div>
         
         <div id="chart-tooltip" class="chart-tooltip">
-            請
+            請點擊上方圖表節點查看說明。
+        </div>
+    </section>
+
+    <section id="ch10">
+        <h2>十、未來情境：順利擴站 vs 蜜糖毒藥</h2>
+        <div class="grid-2">
+            <div class="card" style="border-top-color: #51cf66;">
+                <h3 style="color: #51cf66;">【情境一：救命仙丹（成功）】</h3>
+                <p>場館精準掌握備賽週期，以社群為基底，成功讓會員續約備戰下一場賽事，流失率降至極低 <span class="citation">[1, 12]</span>。</p>
+            </div>
+            <div class="card" style="border-top-color: #ff6b6b;">
+                <h3 style="color: #ff6b6b;">【情境二：蜜糖毒藥（失敗）】</h3>
+                <p>老闆盲目投入 300-500 萬砸硬體改裝，賽季結束後未妥善規劃銜接，遭遇大量退會（賽後低谷），現金流枯竭 <span class="citation">[1]</span>。</p>
+            </div>
+        </div>
+    </section>
+
+    <section id="ch11" style="border-bottom: none;">
+        <h2>十一、結論：短期流量與長期護城河</h2>
+        <div class="card" style="border-top: none; border-left: 4px solid var(--neon-yellow);">
+            <p><strong>1. 短期來看：</strong>HYROX 能靠賽事光環直接解決中小型場館「獲客難」與「留存低」的死穴 <span class="citation">[1]</span>。</p>
+            <p><strong>2. 長期來看：</strong>HYROX 的核心魅力不在雪橇或草皮，而在「戰友革命情感」與「明確的賽事目標」 <span class="citation">[30]</span>。</p>
+            <p><strong>3. 最終呼籲：</strong>用極輕資產啟動，用社群先行凝聚流量，才是台灣中小型健身房在戰國時代突出重圍的黃金法則 <span class="citation">[17, 30]</span>。</p>
+        </div>
+    </section>
+
+    <script>
+        // Chapter 1: Voting Logic
+        function submitVote(choice) {
+            document.getElementById('vote-btns-container').style.display = 'none';
+            const results = document.getElementById('vote-results-container');
+            results.style.display = 'block';
+            
+            // Trigger animation slightly after display block
+            setTimeout(() => {
+                document.getElementById('bar-a').style.width = '42%';
+                document.getElementById('bar-b').style.width = '58%';
+            }, 50);
+
+            // Slide down commentary
+            setTimeout(() => {
+                document.getElementById('expert-comment').style.display = 'block';
+            }, 800);
+        }
+
+        // Chapter 3: Accordion
+        function toggleAccordion(el) {
+            const isActive = el.classList.contains('active');
+            document.querySelectorAll('.accordion').forEach(acc => acc.classList.remove('active'));
+            if (!isActive) {
+                el.classList.add('active');
+            }
+        }
+
+        // Chapter 4: Video Alert
+        function playVideoAlert() {
+            alert('影音串流加載中：本訪談將於正式報告時上線，展示內容包含選手在常規場館備賽之痛點引證 [20, 24]。');
+        }
+
+        // Chapter 6: Tabs
+        function switchTab(btn, text) {
+            const parent = btn.parentElement;
+            parent.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            parent.querySelector('.tab-content').innerHTML = text;
+        }
+
+        // Chapter 8: Sorting
+        function moveUp(btn) {
+            const li = btn.closest('li');
+            if (li.previousElementSibling) {
+                li.parentNode.insertBefore(li, li.previousElementSibling);
+            }
+        }
+
+        function moveDown(btn) {
+            const li = btn.closest('li');
+            if (li.nextElementSibling) {
+                li.parentNode.insertBefore(li.nextElementSibling, li);
+            }
+        }
+
+        function submitSort() {
+            const feedback = document.getElementById('sort-feedback');
+            feedback.style.display = 'block';
+            feedback.innerHTML = `<strong>正確三步驟藍圖：</strong><br>1. 即刻在 Portal 註冊加盟取得地圖導流 <span class="citation">[29]</span>。<br>2. 極簡硬體優化，控制預算在 20 萬內買器材與鋪草皮 <span class="citation">[29]</span>。<br>3. 推動三軌課程（常規課、12週備賽營、週末模擬賽）全面爆發營收 <span class="citation">[29]</span>。`;
+        }
+
+        // Chapter 9: Chart Tooltip
+        function showChartDetails(text) {
+            document.getElementById('chart-tooltip').innerHTML = '<strong>' + text + '</strong>';
+        }
+    </script>
+</body>
+</html>
