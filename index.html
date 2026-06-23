@@ -3,502 +3,841 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>廣道數字案：審計失敗分析 [cite: 1]</title>
+    <title>廣道數字案</title>
+    <!-- 引入 FontAwesome 圖示庫 -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
+        /* ================= 核心設計變數 (商務高品質) ================= */
         :root {
-            --primary: #1e3a8a; /* 深藍色，專業穩重 */
-            --secondary: #ea580c; /* 亮橘色，用於強調與警訊 */
-            --bg-light: #f8fafc;
-            --text-main: #334155;
-            --white: #ffffff;
+            --brand-dark: #0f172a;       /* 深邃藍 */
+            --brand-primary: #1e3a8a;    /* 核心主色 */
+            --brand-accent: #3b82f6;     /* 科技亮藍 */
+            --brand-highlight: #f59e0b;  /* 警示橘色 */
+            --bg-page: #f8fafc;          /* 頁面背景 */
+            --bg-card: #ffffff;          /* 卡片背景 */
+            --text-main: #334155;        /* 主要文字 */
+            --text-light: #64748b;       /* 輔助文字 */
+            
+            /* 字體設定：適中尺寸，保證版面不壅擠且清晰 */
+            --font-base: 'Segoe UI', "Microsoft JhengHei", Roboto, sans-serif;
+            --text-base-size: 1.15rem;   /* 內文適中 */
+            --text-lg-size: 1.3rem;      /* 重點文字 */
+            --heading-1: 3.5rem;         /* 主標題 */
+            --heading-2: 2.5rem;         /* 單元標題 */
+            --heading-3: 1.8rem;         /* 小節標題 */
+            
+            /* 獨立空間間距 */
+            --spacing-independent: 8rem; 
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--bg-light);
+            font-family: var(--font-base);
+            background-color: var(--bg-page);
             color: var(--text-main);
-            margin: 0;
-            padding: 0;
-            line-height: 1.7;
+            font-size: var(--text-base-size);
+            line-height: 1.8;
             overflow-x: hidden;
+            scroll-behavior: smooth;
         }
 
-        h1, h2, h3 { color: var(--primary); }
+        /* ================= 幾何圖形與流線裝飾 ================= */
+        .geo-bg {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: 
+                radial-gradient(circle at 10% 20%, rgba(59, 130, 246, 0.05) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(245, 158, 11, 0.04) 0%, transparent 40%);
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        .svg-wave {
+            position: absolute;
+            bottom: -1px; left: 0; width: 100%;
+            overflow: hidden; line-height: 0;
+        }
+        .svg-wave svg { display: block; width: calc(100% + 1.3px); height: 100px; }
+        .svg-wave path { fill: var(--bg-page); }
+
+        .deco-shape {
+            position: absolute;
+            border-radius: 30px;
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.08), rgba(30, 58, 138, 0.08));
+            z-index: 0;
+            transform: rotate(45deg);
+        }
+
+        /* ================= 頁首 ================= */
+        header {
+            position: relative;
+            background: linear-gradient(145deg, var(--brand-dark) 0%, var(--brand-primary) 100%);
+            padding: 12rem 2rem 10rem 2rem;
+            text-align: center;
+            color: white;
+            clip-path: polygon(0 0, 100% 0, 100% 85%, 0 100%);
+            overflow: hidden;
+        }
         
+        header::before {
+            content: ''; position: absolute; top: -50%; left: -10%; width: 60%; height: 200%;
+            background: rgba(255,255,255,0.03); transform: rotate(30deg);
+        }
+
+        header h1 {
+            font-size: var(--heading-1);
+            font-weight: 900;
+            letter-spacing: 8px;
+            margin-bottom: 1.5rem;
+            text-shadow: 0 10px 20px rgba(0,0,0,0.4);
+            position: relative; z-index: 1;
+        }
+
+        header p {
+            font-size: var(--text-lg-size);
+            color: #e2e8f0;
+            max-width: 800px;
+            margin: 0 auto;
+            font-weight: normal;
+            letter-spacing: 1.5px;
+            position: relative; z-index: 1;
+            line-height: 1.8;
+        }
+
+        header .subtitle {
+            margin-top: 2rem;
+            font-size: 1.2rem;
+            color: var(--brand-highlight);
+            font-weight: bold;
+            position: relative; z-index: 1;
+        }
+
+        /* ================= 共用容器與標題 ================= */
         .container {
             max-width: 1200px;
             margin: 0 auto;
-            padding: 2rem;
-        }
-
-        header {
-            background: linear-gradient(135deg, var(--primary), #3b82f6);
-            color: var(--white);
-            text-align: center;
-            padding: 5rem 2rem;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-        }
-
-        header h1 { color: var(--white); font-size: 3rem; margin-bottom: 1rem; }
-        header p { font-size: 1.2rem; opacity: 0.9; }
-
-        section {
-            margin: 5rem 0;
-            padding: 2rem;
-            background: var(--white);
-            border-radius: 12px;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+            padding: 0 2rem;
+            position: relative;
+            z-index: 1;
         }
 
         .section-title {
             text-align: center;
-            font-size: 2.2rem;
-            margin-bottom: 3rem;
-            border-bottom: 3px solid var(--secondary);
-            display: inline-block;
-            padding-bottom: 0.5rem;
+            font-size: var(--heading-2);
+            color: var(--brand-dark);
+            margin: 8rem 0 5rem 0;
             position: relative;
+            display: inline-block;
             left: 50%;
             transform: translateX(-50%);
+            font-weight: 900;
+            letter-spacing: 2px;
         }
 
-        /* 一、個案背景：大面積區塊與翻頁動畫 */
-        .bg-blocks {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 2rem;
-            perspective: 1000px;
-        }
-        .bg-card {
-            background: #eff6ff;
-            padding: 2.5rem;
-            border-radius: 15px;
-            border-top: 5px solid var(--primary);
-            box-shadow: 0 10px 25px rgba(0,0,0,0.08);
-            opacity: 0;
-            transform: rotateY(90deg);
-            transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        .bg-card.visible {
-            opacity: 1;
-            transform: rotateY(0deg);
-        }
-        .bg-card h3 { font-size: 1.5rem; margin-top: 0; }
-
-        /* 二、研究問題：左右飛入動畫 */
-        .research-core {
-            background: #fff7ed;
-            border-left: 6px solid var(--secondary);
-            padding: 2rem;
-            font-size: 1.3rem;
-            font-weight: bold;
-            border-radius: 8px;
-            margin-bottom: 3rem;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-        }
-        .fly-list { list-style: none; padding: 0; overflow: hidden; }
-        .fly-list li {
-            background: var(--bg-light);
-            margin-bottom: 1rem;
-            padding: 1.5rem;
-            border-radius: 8px;
-            font-size: 1.1rem;
-            border-left: 4px solid var(--primary);
-            opacity: 0;
-            transition: all 0.7s ease-out;
-        }
-        .fly-left { transform: translateX(-100px); }
-        .fly-right { transform: translateX(100px); }
-        .fly-list li.visible { opacity: 1; transform: translateX(0); }
-
-        /* 三、時間軸 */
-        .timeline {
-            position: relative;
-            max-width: 900px;
-            margin: 0 auto;
-        }
-        .timeline::after {
+        .section-title::after {
             content: '';
             position: absolute;
-            width: 4px;
-            background: var(--primary);
-            top: 0; bottom: 0; left: 50%;
-            margin-left: -2px;
+            bottom: -15px; left: 10%; width: 80%; height: 6px;
+            background: linear-gradient(90deg, var(--brand-accent), var(--brand-highlight));
+            border-radius: 5px;
         }
-        .tl-item {
-            padding: 10px 40px;
-            position: relative;
-            width: 50%;
-            box-sizing: border-box;
-            opacity: 0;
-            transform: translateY(50px);
-            transition: all 0.6s ease;
-        }
-        .tl-item.visible { opacity: 1; transform: translateY(0); }
-        .tl-item::after {
-            content: ''; position: absolute;
-            width: 24px; height: 24px; right: -12px;
-            background: var(--white); border: 4px solid var(--secondary);
-            top: 15px; border-radius: 50%; z-index: 1;
-        }
-        .tl-left { left: 0; }
-        .tl-right { left: 50%; }
-        .tl-right::after { left: -12px; }
-        .tl-content {
-            padding: 1.5rem;
-            background: var(--white);
-            border-radius: 8px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            border-top: 3px solid var(--primary);
-        }
-        .tl-date { color: var(--secondary); font-weight: bold; font-size: 1.2rem; margin-bottom: 0.5rem; }
 
-        /* 四、舞弊手法：流程圖與合併區塊 */
-        .fraud-process-container {
-            background: #f0fdf4;
-            padding: 3rem 2rem;
-            border-radius: 15px;
-            border: 2px dashed #22c55e;
-            margin-bottom: 4rem; /* 獨立空間 */
+        /* ================= 動畫類別 ================= */
+        .obs-hidden { opacity: 0; visibility: hidden; }
+        
+        /* 翻頁動畫 (3D Flip) */
+        .anim-flip {
+            transform-origin: top center;
+            transform: perspective(2000px) rotateX(-60deg) translateY(40px);
+            transition: transform 1s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.8s ease-out;
         }
+        .anim-flip.obs-visible { transform: perspective(2000px) rotateX(0deg) translateY(0); opacity: 1; visibility: visible; }
+
+        /* 飛入動畫 */
+        .anim-fly-left {
+            transform: translateX(-150px);
+            transition: transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.6s ease-out;
+        }
+        .anim-fly-right {
+            transform: translateX(150px);
+            transition: transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.6s ease-out;
+        }
+        .anim-fly-left.obs-visible, .anim-fly-right.obs-visible { transform: translateX(0); opacity: 1; visibility: visible; }
+
+        /* 垂直滑入 */
+        .anim-slide-up {
+            transform: translateY(60px);
+            transition: transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.8s ease-out;
+        }
+        .anim-slide-up.obs-visible { transform: translateY(0); opacity: 1; visibility: visible; }
+
+        /* ================= 獨立區塊 (大面積背景、徹底分開) ================= */
+        .independent-block {
+            margin-bottom: var(--spacing-independent);
+            position: relative;
+        }
+
+        .bg-block {
+            background: var(--bg-card);
+            padding: 5rem 4rem;
+            border-radius: 25px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.05);
+            border-left: 12px solid var(--brand-accent);
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* 區塊內幾何背景 */
+        .bg-block::before {
+            content: ''; position: absolute; top: -50px; right: -30px;
+            width: 300px; height: 300px;
+            background: repeating-linear-gradient(45deg, transparent, transparent 15px, rgba(59, 130, 246, 0.03) 15px, rgba(59, 130, 246, 0.03) 30px);
+            border-radius: 50%; z-index: 0;
+        }
+
+        .bg-block h3 {
+            font-size: var(--heading-3);
+            color: var(--brand-dark);
+            margin-bottom: 2rem;
+            position: relative; z-index: 1;
+            display: flex; align-items: center; gap: 15px;
+            font-weight: 800;
+        }
+        
+        .bg-block p { 
+            position: relative; z-index: 1; 
+            line-height: 2;
+        }
+
+        /* ================= 二、研究問題 ================= */
+        .research-hero {
+            background: linear-gradient(135deg, var(--brand-primary), var(--brand-dark));
+            color: white;
+            padding: 4rem 3rem;
+            border-radius: 20px;
+            font-size: 1.4rem;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 3rem;
+            box-shadow: 0 15px 30px rgba(10, 25, 47, 0.2);
+            border-bottom: 8px solid var(--brand-highlight);
+            line-height: 1.8;
+            position: relative;
+        }
+
+        .research-context {
+            text-align: center; font-size: var(--text-lg-size);
+            color: var(--brand-primary); margin-bottom: 4rem; font-weight: bold;
+        }
+
+        .fly-list { list-style: none; overflow-x: hidden; padding: 1rem 0; margin-bottom: var(--spacing-independent); }
+        
+        /* 列點飛入設計：強制內部靠左對齊 */
+        .fly-item {
+            background: var(--bg-card);
+            margin-bottom: 2rem; padding: 2.5rem 3rem;
+            border-radius: 15px; font-size: var(--text-lg-size);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+            display: flex; align-items: flex-start; gap: 20px;
+            text-align: left; /* 強制靠左 */
+            position: relative;
+            font-weight: bold;
+            line-height: 1.8;
+        }
+        
+        .fly-item.left { border-left: 8px solid var(--brand-highlight); }
+        .fly-item.right { border-left: 8px solid var(--brand-accent); }
+        
+        .fly-icon { font-size: 2rem; color: var(--brand-accent); margin-top: 5px; min-width: 40px; text-align: center; }
+        .fly-item.left .fly-icon { color: var(--brand-highlight); }
+        .fly-content { flex: 1; }
+
+        /* ================= 三、個案發展始末 (卷軸式時間軸) ================= */
+        .timeline {
+            position: relative;
+            max-width: 1000px;
+            margin: 0 auto var(--spacing-independent) auto;
+            padding: 2rem 0;
+        }
+
+        .timeline::before {
+            content: ''; position: absolute; width: 6px;
+            background: linear-gradient(to bottom, var(--brand-accent), var(--brand-highlight));
+            top: 0; bottom: 0; left: 50%; transform: translateX(-3px); border-radius: 3px;
+        }
+
+        .tl-node { width: 50%; padding: 20px 40px; position: relative; }
+
+        .tl-node::after {
+            content: ''; position: absolute; width: 24px; height: 24px;
+            background: white; border: 6px solid var(--brand-highlight);
+            border-radius: 50%; top: 40px; box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+
+        .tl-left { left: 0; }
+        .tl-left::after { right: -12px; }
+        
+        .tl-right { left: 50%; }
+        .tl-right::after { left: -12px; border-color: var(--brand-accent); }
+
+        .tl-content {
+            padding: 2.5rem; background: var(--bg-card); border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.06);
+            border-top: 6px solid var(--brand-primary);
+        }
+        .tl-date { color: var(--brand-accent); font-weight: bold; font-size: var(--text-lg-size); margin-bottom: 1rem; }
+        .tl-right .tl-date { color: var(--brand-highlight); }
+        .tl-content p { line-height: 1.8; }
+
+        /* ================= 四、舞弊手法討論 ================= */
+        .fraud-title {
+            font-size: var(--heading-3); color: var(--brand-dark);
+            margin-bottom: 2.5rem; padding-bottom: 1rem;
+            border-bottom: 3px dashed #cbd5e1;
+            font-weight: bold;
+        }
+
+        /* 第 1 點：橫向過程圖 (畫圈標註) */
         .process-flow {
-            display: flex;
-            align-items: center;
+            display: flex; 
             justify-content: space-between;
-            gap: 1rem;
-            flex-wrap: wrap;
+            align-items: stretch;
+            gap: 2rem;
+            margin-top: 6rem; 
+            position: relative;
+        }
+        /* 連結虛線背景 */
+        .process-flow::before {
+            content: ''; position: absolute; top: 60px; left: 10%; right: 10%;
+            height: 4px; background: dashed 4px #cbd5e1; z-index: 0;
         }
         .process-step {
             flex: 1;
-            min-width: 200px;
-            background: var(--white);
-            padding: 1.5rem;
-            border-radius: 10px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-            position: relative;
-            text-align: center;
+            background: #f1f5f9; padding: 5rem 2rem 2rem 2rem;
+            border-radius: 20px; text-align: center; position: relative; z-index: 1;
+            border: 2px solid #e2e8f0; box-shadow: 0 10px 20px rgba(0,0,0,0.04);
+            display: flex; flex-direction: column;
         }
         .person-circle {
-            position: absolute;
-            top: -20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: var(--secondary);
-            color: var(--white);
-            width: 40px; height: 40px;
-            border-radius: 50%;
+            position: absolute; top: -50px; left: 50%; transform: translateX(-50%);
+            width: 100px; height: 100px; background: var(--brand-dark); color: white;
+            border-radius: 50%; border: 6px solid white;
             display: flex; justify-content: center; align-items: center;
-            font-size: 1.2rem; font-weight: bold;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-            white-space: nowrap;
+            font-size: 2rem; font-weight: bold; box-shadow: 0 10px 20px rgba(0,0,0,0.15);
         }
-        .person-label {
-            position: absolute;
-            top: -45px; left: 50%; transform: translateX(-50%);
-            font-size: 0.9rem; font-weight: bold; color: var(--secondary);
-            white-space: nowrap;
+        .person-role {
+            position: absolute; top: -75px; left: 50%; transform: translateX(-50%);
+            background: var(--brand-highlight); color: white; padding: 6px 20px;
+            border-radius: 20px; font-weight: bold; font-size: 1rem;
+            box-shadow: 0 5px 10px rgba(245,158,11,0.2); white-space: nowrap;
         }
-        .process-arrow { font-size: 2rem; color: #22c55e; }
+        .process-step h4 { font-size: 1.25rem; color: var(--brand-dark); margin-bottom: 1rem; font-weight: bold; }
+        .process-step p { font-size: 1rem; color: var(--text-main); line-height: 1.6; }
         
-        .fraud-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
-        .fraud-box { background: #f8fafc; padding: 2rem; border-radius: 8px; border-left: 5px solid var(--primary); }
+        .flow-arrow { 
+            font-size: 3rem; color: var(--brand-accent); z-index: 1; 
+            display: flex; align-items: center; justify-content: center; 
+        }
 
-        /* 五、法令表格 */
-        table { width: 100%; border-collapse: collapse; margin-bottom: 2rem; }
-        th, td { padding: 1.2rem; border: 1px solid #cbd5e1; text-align: left; }
-        th { background: var(--primary); color: var(--white); }
-        tr:nth-child(even) { background: #f1f5f9; }
+        /* 列表排版 */
+        .custom-list { padding-left: 0; list-style-type: none; margin-top: 2rem; }
+        .custom-list li { 
+            margin-bottom: 2rem; position: relative; padding-left: 3rem; 
+            line-height: 1.8; background: #f8fafc; padding-top: 1.5rem; padding-bottom: 1.5rem; padding-right: 1.5rem; border-radius: 12px;
+        }
+        .custom-list li::before {
+            content: '📌'; position: absolute; left: 1rem; top: 1.6rem; font-size: 1.3rem;
+        }
+        .custom-list strong { color: var(--brand-accent); font-size: var(--text-lg-size); display: block; margin-bottom: 0.5rem; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.5rem; }
 
-        /* 六、互動列點式 */
+        /* ================= 五、法令與表格 ================= */
+        .law-table {
+            width: 100%; border-collapse: separate; border-spacing: 0;
+            margin: 3rem 0; border-radius: 15px; overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05); border: 2px solid #e2e8f0;
+        }
+        .law-table th, .law-table td { padding: 2rem; text-align: left; }
+        .law-table th { background: var(--brand-primary); color: white; font-size: var(--text-lg-size); font-weight: bold; }
+        .law-table tr:nth-child(even) { background: #f8fafc; }
+        .law-table td { border-bottom: 1px solid #e2e8f0; background: white; line-height: 1.8;}
+        
+        .violation-highlight {
+            background: linear-gradient(135deg, #fef3c7, #fef08a);
+            padding: 3rem; border-radius: 20px; border-left: 10px solid var(--brand-highlight);
+            box-shadow: 0 10px 20px rgba(245,158,11,0.1); margin-top: 4rem;
+        }
+        .violation-highlight h3 { font-size: var(--heading-3); color: #b45309; margin-bottom: 1.5rem; font-weight: bold;}
+        .violation-highlight p { color: var(--brand-dark); margin-bottom: 1.5rem; font-weight: bold;}
+        .violation-highlight li { color: var(--brand-dark); margin-bottom: 1rem; font-weight: bold; line-height: 1.8; list-style-position: inside; }
+
+        /* ================= 六、會計師責任 (互動列點) ================= */
+        .accordion-wrapper { margin-bottom: var(--spacing-independent); }
         details {
-            background: var(--bg-light);
-            border: 1px solid #cbd5e1;
-            border-radius: 8px;
-            margin-bottom: 1rem;
-            padding: 0.5rem 1rem;
-            transition: all 0.3s;
+            background: white; border-radius: 15px; margin-bottom: 1.5rem;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.04); border: 1px solid #e2e8f0;
+            overflow: hidden; transition: all 0.3s ease;
         }
-        details[open] { background: var(--white); box-shadow: 0 4px 10px rgba(0,0,0,0.05); border-left: 4px solid var(--secondary); }
+        details[open] { box-shadow: 0 15px 30px rgba(0,0,0,0.08); border-left: 8px solid var(--brand-accent); }
         summary {
-            font-size: 1.2rem; font-weight: bold; cursor: pointer;
-            padding: 1rem 0; outline: none; color: var(--primary);
+            padding: 2rem; font-size: var(--text-lg-size); font-weight: bold; color: var(--brand-dark);
+            cursor: pointer; list-style: none; display: flex; justify-content: space-between;
+            align-items: center; background: #f1f5f9;
         }
-        details p { padding: 1rem 0; margin: 0; border-top: 1px solid #e2e8f0; }
+        summary::-webkit-details-marker { display: none; }
+        summary::after {
+            content: '107'; font-family: "Font Awesome 6 Free"; font-weight: 900;
+            color: var(--brand-accent); font-size: 1.5rem; transition: transform 0.3s;
+        }
+        details[open] summary::after { transform: rotate(180deg); }
+        .details-body { padding: 2.5rem; background: white; border-top: 2px solid #e2e8f0; line-height: 1.8; font-weight: bold;}
 
-        /* 七、結論與參考文獻 */
-        .conclusion-text p { font-size: 1.15rem; margin-bottom: 1.5rem; }
-        .ref-list { word-break: break-all; line-height: 2; font-size: 0.95rem; }
+        /* ================= 七、結論 (打字機動畫) ================= */
+        .typewriter-box {
+            background: linear-gradient(135deg, var(--brand-dark), var(--brand-primary)); 
+            color: white;
+            padding: 5rem 4rem; border-radius: 25px;
+            margin-bottom: var(--spacing-independent); min-height: 350px;
+            box-shadow: 0 20px 40px rgba(10,25,47,0.2);
+            font-size: var(--text-lg-size); position: relative; font-weight: bold;
+        }
+        .typewriter-box::before {
+            content: '💡'; position: absolute; top: 30px; right: 40px; font-size: 4rem; opacity: 0.2;
+        }
+        #tw-text { white-space: pre-wrap; line-height: 2; }
+        .tw-cursor {
+            display: inline-block; width: 10px; height: 1.5rem;
+            background-color: var(--brand-highlight); vertical-align: middle;
+            animation: blink 1s step-end infinite; margin-left: 5px;
+        }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
 
-        footer { text-align: center; padding: 3rem; color: #94a3b8; font-size: 0.85rem; }
+        /* ================= 八、參考文獻 ================= */
+        .ref-container {
+            background: white; padding: 4rem; border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05); margin-bottom: var(--spacing-independent);
+        }
+        .ref-list { list-style: none; }
+        .ref-list li {
+            margin-bottom: 1.5rem; display: flex; gap: 15px; align-items: baseline;
+            word-break: break-all; line-height: 1.8;
+        }
+        .ref-list i { color: var(--brand-accent); font-size: 1.2rem; }
 
-        @media (max-width: 768px) {
-            .timeline::after { left: 31px; }
-            .tl-item { width: 100%; padding-left: 70px; padding-right: 25px; }
-            .tl-item::after { left: 21px; }
+        /* ================= 九、頁尾分工 ================= */
+        footer {
+            text-align: center; padding: 5rem 2rem 3rem 2rem;
+            color: #94a3b8; font-size: 1rem; border-top: 2px dashed #cbd5e1;
+        }
+        footer .member-note { margin-top: 1rem; font-weight: normal; color: var(--text-light); }
+
+        /* ================= 響應式調整 ================= */
+        @media (max-width: 1024px) {
+            .process-flow { display: flex; flex-direction: column; gap: 6rem; }
+            .process-flow::before { display: none; }
+            .flow-arrow { transform: rotate(90deg); margin: 0 auto; }
+            .bg-block { padding: 3rem 2rem; }
+            .timeline::before { left: 30px; }
+            .tl-node { width: 100%; padding: 20px 0 20px 70px; }
+            .tl-node::after { left: 18px !important; }
             .tl-right { left: 0; }
-            .fraud-grid { grid-template-columns: 1fr; }
-            .process-arrow { transform: rotate(90deg); margin: 1rem 0; }
-            .process-flow { flex-direction: column; }
         }
     </style>
 </head>
 <body>
 
+    <!-- 幾何背景裝飾 -->
+    <div class="geo-bg"></div>
+    <div class="deco-shape" style="width: 400px; height: 400px; top: 10%; right: -150px;"></div>
+    <div class="deco-shape" style="width: 300px; height: 300px; bottom: 15%; left: -150px;"></div>
+
+    <!-- 頁首 -->
     <header>
-        <h1>廣道數字案：審計失敗與舞弊分析 📊 [cite: 1]</h1>
-        <p>全套單據偽造與會計師疏漏之深入探討</p>
+        <h1>廣道數字案</h1>
+        <p>全套完美偽造下的反常警訊與會計師疏漏深度探討</p>
+        <div class="subtitle">
+            1122826 - 林峻逸 - 會計班3/F
+        </div>
+        <div class="svg-wave">
+            <svg viewBox="0 0 1200 120" preserveAspectRatio="none">
+                <path d="M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V120H0V95.8C59.71,118.08,130.83,115.15,195.36,97.66,238.44,85.65,281.94,71.05,321.39,56.44Z"></path>
+            </svg>
+        </div>
     </header>
 
     <div class="container">
 
-        <section>
-            <h2 class="section-title">🏢 一、個案背景 [cite: 13]</h2>
-            <div class="bg-blocks">
-                <div class="bg-card animate-flip">
-                    <h3>1. 公司在做什麼？ 💻</h3>
-                    <p>深圳市廣道數字技術股份有限公司，成立於 2003 年 10 月 24 日，這公司主要做<strong>數據應用類軟件開發與銷售</strong> [cite: 14]。後於 2024 年 12 月 4 日收到中國證監會發的《立案告知書》，因公司涉嫌信息披露違法違規，被中國證監會決定調查 [cite: 14]。</p>
-                </div>
-                <div class="bg-card animate-flip" style="transition-delay: 0.2s;">
-                    <h3>2. 舞弊與虛增報表 📈</h3>
-                    <p>廣道數字在幾年前就有系統性舞弊的行為，透過 <strong>ERP 系統後台</strong>製作虛假購銷合同、發票、銀行回單、發貨通知單及入庫單等方式虛構業務 [cite: 15]。導致公司在 2018 年至 2024 年上半年期間大幅虛增營收及成本（例如：2022 年虛增營業收入高達 3.03 億元，占當期報告記載金額的 99.39%） [cite: 15]。因管理層凌駕控制之上，導致報表均有誤發生 [cite: 15]。</p>
-                </div>
-                <div class="bg-card animate-flip" style="transition-delay: 0.4s;">
-                    <h3>3. 「無法表示意見」之審計報告 🚫</h3>
-                    <p>最後，因原主營業務停滯、關鍵崗位員工大規模流失、資金監管帳戶被凍結，以及銀行貸款逾期（如中審華會計師事務所提及的 3,220.63 萬元逾期） [cite: 16]。會計師無法判斷公司是否具備持續經營能力，對其 2024 年度財務報表出具了「無法表示意見」的審計報告 [cite: 16, 33]。</p>
-                </div>
+        <!-- ================= 一、個案背景 ================= -->
+        <h2 class="section-title">一、個案背景</h2>
+        
+        <!-- 獨立空間 1 -->
+        <div class="independent-block anim-flip obs-hidden">
+            <div class="bg-block">
+                <h3><i class="fas fa-building" style="color: var(--brand-accent);"></i> 1. 公司在做什麼？</h3>
+                <p>深圳市廣道數字技術股份有限公司，成立於 2003 年 10 月 24 日，這公司主要做數據應用類軟件開發與銷售。後於 2024 年 12 月 4 日收到中國證監會發的《立案告知書》，因公司涉嫌信息披露違法違規，被中國證監會決定調查。</p>
             </div>
-        </section>
+        </div>
 
-        <section>
-            <h2 class="section-title">❓ 二、研究問題 [cite: 18]</h2>
-            <div class="research-core">
-                「面對這種『全套完美偽造』，會計師在執行控制測試與實質性程序時，究竟忽略了哪些反常的警訊，才導致長達六年的審計失敗？」 [cite: 19]
+        <!-- 獨立空間 2 -->
+        <div class="independent-block anim-flip obs-hidden">
+            <div class="bg-block" style="border-left-color: var(--brand-highlight);">
+                <h3><i class="fas fa-chart-line" style="color: var(--brand-highlight);"></i> 2. 舞弊與虛增收入成本導致報表不實表達</h3>
+                <p>2025 年 6 月 13 日公司收到深圳監管局發的告知與查明處罰書。指出，廣道數字在幾年前就有系統性舞弊的行為，透過ERP系統後台製作虛假購銷合同、發票、銀行回單、發貨通知單及入庫單等方式虛構銷售和採購業務。此舉導致公司在 2018 年至 2024 年上半年期間，大幅虛增營業收入及營業成本(例如: 2022 年虛增營業收入高達 3.03 億元，占當期報告記載金額的 99.39%)。因管理層在控制之上，內部控制全面失效導致以前年度的資產負債表、現金流量表…等等，都有誤發生。</p>
             </div>
-            <p>雖然這種操控後台 ERP 系統的偽造看似完美，但根據：「中國證券監督管理委員會深圳監管局行政處罰決定書」，我們了解到 [cite: 20]：</p>
-            <ul class="fly-list">
-                <li class="fly-left">🛑 1. 會計師在測試採購與付款、銷售與收款循環時，<strong>忽略了單據邏輯錯誤</strong> [cite: 21]。</li>
-                <li class="fly-right">🛑 2. 執行函證時忽略了疑似內部人員<strong>「攔截詢證函」</strong>的舞弊特徵 [cite: 22]。</li>
-                <li class="fly-left">🛑 3. 執行貨幣資金與證實程序時，<strong>忽略了某些憑證外觀、常見的警訊</strong> [cite: 23]。</li>
-                <li class="fly-right">🛑 4. 流於形式的查核讓<strong>存貨觀察、盤查與稅收核驗全面失敗</strong> [cite: 24]。</li>
+        </div>
+
+        <!-- 獨立空間 3 -->
+        <div class="independent-block anim-flip obs-hidden">
+            <div class="bg-block" style="border-left-color: #ef4444;">
+                <h3><i class="fas fa-ban" style="color: #ef4444;"></i> 3. 出具「無法表示意見」的審計報告</h3>
+                <p>最後，因原主營業務停滯、關鍵崗位員工大規模流失、資金監管帳戶被凍結，以及銀行貸款逾期(如中審華會計師事務所提及的 3,220.63 萬元逾期)，會計師事務所對其 2024 年度財務報表出具了「無法表示意見」的審計報告。</p>
+            </div>
+        </div>
+
+        <!-- ================= 二、研究問題 ================= -->
+        <h2 class="section-title">二、研究問題</h2>
+        
+        <div class="research-hero obs-hidden anim-slide-up">
+            「面對這種『全套完美偽造』，會計師在執行控制測試與實質性程序時，究竟忽略了哪些反常的警訊，才導致長達六年的審計失敗？」
+        </div>
+        
+        <div class="research-context obs-hidden anim-slide-up">
+            我們透過「中國證券監督管理委員會深圳監管局行政處罰決定書」了解到：
+        </div>
+
+        <ul class="fly-list">
+            <li class="fly-item left obs-hidden anim-fly-left">
+                <i class="fas fa-exclamation-circle fly-icon"></i>
+                <div class="fly-content">1. 會計師在測試採購與付款、銷售與收款循環時，忽略了單據邏輯錯誤。</div>
+            </li>
+            <li class="fly-item right obs-hidden anim-fly-right">
+                <i class="fas fa-envelope-open-text fly-icon"></i>
+                <div class="fly-content">2. 執行函證時忽略了疑似內部人員「攔截詢證函」的舞弊特徵。</div>
+            </li>
+            <li class="fly-item left obs-hidden anim-fly-left">
+                <i class="fas fa-search-dollar fly-icon"></i>
+                <div class="fly-content">3. 執行貨幣資金與證實程序時，忽略了某些憑證外觀、常見的警訊。</div>
+            </li>
+            <li class="fly-item right obs-hidden anim-fly-right">
+                <i class="fas fa-box-open fly-icon"></i>
+                <div class="fly-content">4. 流於形式的查核讓存貨觀察、盤查與稅收核驗全面失敗。</div>
+            </li>
+        </ul>
+
+        <p style="text-align: center; font-size: var(--text-lg-size); font-weight: bold; color: var(--brand-accent); margin: 4rem 0 var(--spacing-independent) 0;" class="obs-hidden anim-slide-up">
+            🔍 所以在這個個案中，會計師還是可以透過查核得知錯誤的，但到底為什麼會計師會忽略呢？我想研究，探討看看。
+        </p>
+
+        <!-- ================= 三、個案發展始末 ================= -->
+        <h2 class="section-title">三、個案發展始末</h2>
+        <div class="timeline">
+            
+            <div class="tl-node tl-left obs-hidden anim-slide-up">
+                <div class="tl-content">
+                    <div class="tl-date">2018年 ~ 2024年上半年</div>
+                    <p>在這長達六年半的期間內，廣道數字時任董事長暨實際控制人金文明，與時任董事、副總經理暨財務負責人趙璐等人，指使公司員工透過偽造合同、發票、銀行回單、發貨通知單及入庫單等方式實施系統性的財務造假。此舉導致公司 2018 年至 2023 年年度報告、2024 年半年度報告及《募集說明書》等財務報表有不實表達的問題。</p>
+                </div>
+            </div>
+            
+            <div class="tl-node tl-right obs-hidden anim-slide-up">
+                <div class="tl-content">
+                    <div class="tl-date">2024年12月4日</div>
+                    <p>廣道數字於當日正式收到中國證券監督管理委員會發的《立案告知書》，因公司涉嫌信息披露違法違規，被決定立案調查。</p>
+                </div>
+            </div>
+
+            <div class="tl-node tl-left obs-hidden anim-slide-up">
+                <div class="tl-content">
+                    <div class="tl-date">2025年3月至4月</div>
+                    <p>2025 年 3 月 25 日，公司在杭州銀行、招商銀行、中國銀行開立的三個資金監管帳戶正式被證監會凍結，涉及凍結資金合計高達 4,693.71 萬元，隨後更引發招商銀行與中國銀行的兩筆貸款(合計 3,220.63 萬元)逾期。<br><br>
+                    <b>審計失敗揭露：</b> 2025 年 4 月 28 日，中審華會計師事務所出具了合併審計報告，因公司內部控制失效、原主營業務基本停滯且關鍵人員流失，會計師無法判斷公司是否具備持續經營能力，對其 2024 年度財務報表出具了「無法表示意見」的審計報告。</p>
+                </div>
+            </div>
+
+            <div class="tl-node tl-right obs-hidden anim-slide-up">
+                <div class="tl-content">
+                    <div class="tl-date">2025年8月</div>
+                    <p>在廣道數字發布 2025 年半年度報告之際，公司面臨嚴重的人員流失（研發技術人員大多離職），包含董事楊彬、監事周紹鑫、劉海軍等人在內的治理層，紛紛以公司內控失效、會計師已出具無法表示意見、以及自身非財務專業為由，對半年度報告內容提出異議，公開表示無法保證該報告的真實、準確與完整。</p>
+                </div>
+            </div>
+
+            <div class="tl-node tl-left obs-hidden anim-slide-up">
+                <div class="tl-content">
+                    <div class="tl-date">2025年9月12日</div>
+                    <p>中國證監會深圳監管局發布〔2025〕9號《行政處罰決定書》。<br>
+                    • 對廣道數字給予警告，並處以 1,000 萬元罰款。<br>
+                    • 對實際控制人金文明處以高達 1,500 萬元罰款，對財務負責人趙璐處以 500萬元罰款，並對兩人均採取「終身證券市場禁入」措施。<br>
+                    • 包含副總經理、監事、獨立董事及財務、採購經理等其他 8 名涉案或未勤勉盡責的相關人員，分別被處以 50 萬至 250 萬元不等的罰款。</p>
+                </div>
+            </div>
+
+            <div class="tl-node tl-right obs-hidden anim-slide-up">
+                <div class="tl-content">
+                    <div class="tl-date">2026年5月28日</div>
+                    <p>中國證監會深圳監管局發布〔2026〕8號《行政處罰決定書》，針對連續多年為廣道數字提供審計服務的「中審華會計師事務所」開罰。監管局認定會計師未保持職業懷疑、未執行恰當審計程序，對事務所責令改正，沒收業務收入 2,169,811.28元，並處以 10,849,056.40元罰款，同時暫停從事證券服務業務 6個月。相關簽字註冊會計師分別被處以罰款及禁入措施。</p>
+                </div>
+            </div>
+            
+        </div>
+
+        <!-- ================= 四、舞弊手法討論 ================= -->
+        <h2 class="section-title">四、舞弊手法討論</h2>
+
+        <!-- 第 1 點：獨立空間、橫向過程圖 -->
+        <div class="independent-block bg-block obs-hidden anim-slide-up">
+            <h3 class="fraud-title" style="border-bottom: 3px dashed #cbd5e1; padding-bottom: 1.5rem;">1. 管理層主導的「全套單據偽造」與「阻斷查核軌跡」</h3>
+            <p style="text-align: center; margin-bottom: 4rem;">公司透過製作虛假購銷合同、發票、銀行回單、發貨通知單及入庫單等方式虛構業務，在 2018 年至 2024 年上半年期間大幅虛增營收，例如 2022 年單年度就虛增了 3.03 億元的營業收入，佔當期記載金額的高達 99.39%。</p>
+            
+            <div class="process-flow">
+                <div class="process-step">
+                    <div class="person-role">時任財務部經理</div>
+                    <div class="person-circle">鄒</div>
+                    <h4 style="margin: 2rem 0 1rem 0; font-size: 1.3rem; color: var(--brand-dark);">製作虛假列表</h4>
+                    <p style="font-size: 1rem;">負責製作虛假銷售、採購合同列表，並向審計機構提供「函證對象虛假的聯繫人信息」。</p>
+                </div>
+                <div class="flow-arrow"><i class="fas fa-chevron-right"></i></div>
+                
+                <div class="process-step">
+                    <div class="person-role">時任採購經理</div>
+                    <div class="person-circle">李</div>
+                    <h4 style="margin: 2rem 0 1rem 0; font-size: 1.3rem; color: var(--brand-dark);">實體單據與攔截</h4>
+                    <p style="font-size: 1rem;">配合製作出入庫單、付款單等，更在年報審計期間直接「攔截部分詢證函」。</p>
+                </div>
+                <div class="flow-arrow"><i class="fas fa-chevron-right"></i></div>
+
+                <div class="process-step">
+                    <div class="person-role">時任監事</div>
+                    <div class="person-circle">陳</div>
+                    <h4 style="margin: 2rem 0 1rem 0; font-size: 1.3rem; color: var(--brand-dark);">技術與數位偽造</h4>
+                    <p style="font-size: 1rem;">利用自身技術協助開發軟體用於製作虛假發票、銀行回單，並指導製作附有二維碼的虛假完稅證明。</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 第 2 & 3 點：獨立空間 -->
+        <div class="independent-block bg-block obs-hidden anim-slide-up" style="border-left-color: var(--brand-highlight);">
+            <h3 class="fraud-title" style="border-bottom: 3px dashed #cbd5e1; padding-bottom: 1.5rem;">2 & 3. 忽略「單據邏輯與時序」與「憑證外觀與常識」的紅旗警訊</h3>
+            <p>在 2018 至 2023 年，會計師在執行控制測試與實質性程序時，完全忽略了明顯違背商業邏輯的異常與偽造破綻：</p>
+            <ul class="custom-list">
+                <li>
+                    <strong>入庫單異常</strong>
+                    「後入庫的存貨入庫單號早於先入庫的入庫單號」，且「不同月份採購入庫單編號連續」。
+                </li>
+                <li>
+                    <strong>出庫單異常</strong>
+                    「後出庫的出庫單號早於先出庫的出庫單號」。
+                </li>
+                <li>
+                    <strong>錯別字與格式異常</strong>
+                    公司提供的銀行對帳單、憑證後附的銀行回單中存在明顯的「錯別字與格式異常」。
+                </li>
+                <li>
+                    <strong>命名邏輯不符</strong>
+                    銀行回單與發票上的「對手方開戶行名稱與銀行日常命名規則不一致」。
+                </li>
             </ul>
-            <p style="margin-top: 1rem; font-weight: bold; color: var(--primary);">所以在這個個案中，會計師還是可以透過查核得知錯誤的，但到底為什麼會計師會忽略呢？我想研究，探討看看 [cite: 25]。</p>
-        </section>
+        </div>
 
-        <section>
-            <h2 class="section-title">⏳ 三、個案發展始末 [cite: 26]</h2>
-            <div class="timeline">
-                <div class="tl-item tl-left animate-scroll">
-                    <div class="tl-content">
-                        <div class="tl-date">2018年 ~ 2024年上半年 [cite: 27]</div>
-                        <p>時任董事長金文明與財務負責人趙璐等人，指使員工偽造全套單據實施系統性的財務造假，導致多年財報與《募集說明書》有不實表達問題 [cite: 28]。</p>
-                    </div>
-                </div>
-                <div class="tl-item tl-right animate-scroll">
-                    <div class="tl-content">
-                        <div class="tl-date">2024年12月4日 [cite: 29]</div>
-                        <p>廣道數字收到中國證監會的《立案告知書》，因涉嫌信息披露違法違規，正式被決定立案調查 [cite: 30]。</p>
-                    </div>
-                </div>
-                <div class="tl-item tl-left animate-scroll">
-                    <div class="tl-content">
-                        <div class="tl-date">2025年3月至4月 [cite: 31]</div>
-                        <p>三個資金監管帳戶被凍結達 4,693.71 萬元，引發貸款逾期 [cite: 32]。4月28日，中審華會計師事務所對其 2024 年度財務報表出具了「無法表示意見」的審計報告 [cite: 33]。</p>
-                    </div>
-                </div>
-                <div class="tl-item tl-right animate-scroll">
-                    <div class="tl-content">
-                        <div class="tl-date">2025年8月 [cite: 34]</div>
-                        <p>面臨嚴重人員流失，包含董事、監事在內的治理層，以內控失效為由，對半年度報告提出異議，公開表示無法保證報告真實性 [cite: 35]。</p>
-                    </div>
-                </div>
-                <div class="tl-item tl-left animate-scroll">
-                    <div class="tl-content">
-                        <div class="tl-date">2025年9月12日 [cite: 36]</div>
-                        <p>深圳監管局發布處罰：廣道數字罰款 1,000 萬元 [cite: 39]；實控人金文明罰 1,500 萬、趙璐罰 500 萬，並採取「終身證券市場禁入」 [cite: 40]。其他 8 名人員也遭罰款 [cite: 41]。</p>
-                    </div>
-                </div>
-                <div class="tl-item tl-right animate-scroll">
-                    <div class="tl-content">
-                        <div class="tl-date">2026年5月28日 [cite: 42]</div>
-                        <p>針對「中審華會計師事務所」開罰。沒收收入並處以千萬罰款，暫停業務半年。相關簽字會計師分別被罰款並採取市場禁入 [cite: 43]。</p>
-                    </div>
-                </div>
-            </div>
-        </section>
+        <!-- 第 4 點：獨立空間 -->
+        <div class="independent-block bg-block obs-hidden anim-slide-up">
+            <h3 class="fraud-title" style="border-bottom: 3px dashed #cbd5e1; padding-bottom: 1.5rem;">4. 函證程序階段：忽略「極度異常的回函軌跡」紅旗警訊</h3>
+            <p>會計師在執行函證時未保持控制，忽略了高度疑似「內部人員自導自演」的舞弊特徵：</p>
+            <ul class="custom-list">
+                <li>
+                    <strong>聯絡人重疊</strong>
+                    發函收件人或回函寄件人的姓名、聯繫方式，竟然「與公司員工通訊錄姓名、聯繫方式一致」。
+                </li>
+                <li>
+                    <strong>地址與印章破綻</strong>
+                    「發函地址與回函地址不一致」、「不同客戶回函寄件人或聯繫方式相同」，且個別客戶的「印章名稱與其工商註冊名稱不一致」。
+                </li>
+            </ul>
+        </div>
 
-        <section>
-            <h2 class="section-title">🕵️ 四、舞弊手法討論 [cite: 44]</h2>
-            
-            <div class="fraud-process-container">
-                <h3 style="text-align: center; margin-top: 0;">1. 管理層主導的「全套單據偽造」與「阻斷查核軌跡」 [cite: 45]</h3>
-                <p style="text-align: center; margin-bottom: 2.5rem;">公司在 2018 年至 2024 年上半年期間大幅虛增營收，2022 年單年度就虛增高達 99.39% [cite: 46]。</p>
-                <div class="process-flow">
-                    <div class="process-step">
-                        <div class="person-label">財務部經理</div>
-                        <div class="person-circle">鄒</div>
-                        <p style="margin-top: 1rem;"><strong>製作虛假列表</strong><br>製作虛假銷售、採購合同列表，並提供函證對象虛假的聯繫人信息 [cite: 47]。</p>
-                    </div>
-                    <div class="process-arrow">➔</div>
-                    <div class="process-step">
-                        <div class="person-label">採購經理</div>
-                        <div class="person-circle">李</div>
-                        <p style="margin-top: 1rem;"><strong>實體單據與攔截</strong><br>配合製作出入庫單、付款單等，更在年報審計期間直接「攔截部分詢證函」 [cite: 48]。</p>
-                    </div>
-                    <div class="process-arrow">➔</div>
-                    <div class="process-step">
-                        <div class="person-label">監事</div>
-                        <div class="person-circle">陳</div>
-                        <p style="margin-top: 1rem;"><strong>技術與數位偽造</strong><br>利用技術開發軟體偽造發票、銀行回單，並指導製作「附有二維碼的虛假完稅證明」 [cite: 49]。</p>
-                    </div>
-                </div>
-            </div>
+        <!-- 第 5 點：獨立空間 -->
+        <div class="independent-block bg-block obs-hidden anim-slide-up" style="border-left-color: var(--brand-highlight);">
+            <h3 class="fraud-title" style="border-bottom: 3px dashed #cbd5e1; padding-bottom: 1.5rem;">5. 存貨監盤與稅收核驗：防線流於形式的警訊</h3>
+            <ul class="custom-list">
+                <li>
+                    <strong>空箱冒充存貨</strong>
+                    在 2018 年至 2023 年存貨監盤時，會計師未打開包裝查看真實內容物，導致未能發現公司使用「空箱或二手硬體冒充帳面存貨」的惡劣手法。
+                </li>
+                <li>
+                    <strong>未掃碼核驗稅單</strong>
+                    會計師對公司提供的納稅證明，未採取登錄稅務局網站或「掃描二維碼」查看等基本數位核驗程序，讓公司得以用軟體偽造的稅收證明過關。
+                </li>
+            </ul>
+        </div>
 
-            <div class="fraud-grid">
-                <div class="fraud-box">
-                    <h3>2 & 3. 忽略單據邏輯時序與憑證外觀 [cite: 50, 54]</h3>
-                    <p>會計師在控制測試與實質性程序時，完全忽略了違背商業邏輯與憑證常識的紅旗警訊：</p>
-                    <ul>
-                        <li><strong>出入庫單異常：</strong>「後入庫的存貨入庫單號早於先入庫的入庫單號」 [cite: 52]；「後出庫的出庫單號早於先出庫的出庫單號」 [cite: 53]。不同月份編號連續 [cite: 52]。</li>
-                        <li><strong>憑證外觀破綻：</strong>銀行對帳單與回單中存在明顯的「錯別字與格式異常」 [cite: 56]。</li>
-                        <li><strong>命名邏輯不符：</strong>發票與回單上的「對手方開戶行名稱與銀行日常命名規則不一致」 [cite: 57]。</li>
-                    </ul>
-                </div>
+        <!-- ================= 五、相關會計、審計法令 ================= -->
+        <h2 class="section-title">五、相關會計、審計法令</h2>
+        
+        <p style="font-size: var(--text-lg-size); font-weight: bold; margin-bottom: 2rem;" class="obs-hidden anim-slide-up">結合兩岸審計準則之具體規範與探討：</p>
+        
+        <table class="law-table obs-hidden anim-slide-up">
+            <thead>
+                <tr>
+                    <th style="width: 25%;">查核重點</th>
+                    <th>兩岸準則規範與本案探討</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>未保持職業懷疑</strong></td>
+                    <td>中國第1101號及1141號準則強調，應「認識到存在舞弊導致的重大錯報的可能性，而不應受到以前對管理層、治理層正直和誠信形成的判斷的影響」；台灣審計準則240號亦有完全相同的規範。本案會計師面對帶有錯別字、命名邏輯異常的銀行回單，卻未依規「對可能偽造或變動的文件作進一步調查」，嚴重缺乏職業懷疑。</td>
+                </tr>
+                <tr>
+                    <td><strong>外部函證控制</strong></td>
+                    <td>中國第1312號準則明文規定，實施函證時「應當對詢證函保持控制」；第十九條規定「在未回函的情況下，註冊會計師應當實施替代程序」。本案會計師不僅讓公司採購經理李威有機會攔截詢證函，甚至在 2018 年對部分未回函客戶「完全未執行替代測試」，導致最核心的外部查核證據失效。</td>
+                </tr>
+                <tr>
+                    <td><strong>管理層凌駕控制之風險</strong></td>
+                    <td>中國第1141號準則指出「管理層處於實施舞弊的獨特地位...這種風險屬於舞弊導致的重大錯報風險，從而也是一種特別風險」；台灣審計準則240號亦將此視為顯著風險。兩岸準則均要求查核人員必須「測試日常會計核算過程中作出的會計分錄是否適當」。若會計師有確實執行分錄測試與單據核對，應能輕易發現本案中「後入庫單號早於先入庫單號」等時序邏輯錯誤。</td>
+                </tr>
+            </tbody>
+        </table>
 
-                <div class="fraud-box">
-                    <h3>4. 函證程序：忽略內部人員自導自演 [cite: 58]</h3>
-                    <p>會計師在執行函證時未保持控制，忽略了高度疑似<strong>「內部人員自導自演」</strong>的舞弊特徵 [cite: 58]：</p>
-                    <ul>
-                        <li><strong>聯絡人重疊：</strong>發函收件人或回函寄件人的姓名、聯繫方式，竟然「與公司員工通訊錄姓名、聯繫方式一致」 [cite: 59]。</li>
-                        <li><strong>地址與印章破綻：</strong>「發函地址與回函地址不一致」、「不同客戶回函寄件人或聯繫方式相同」 [cite: 60]。個別客戶的「印章名稱與其工商註冊名稱不一致」 [cite: 60]。</li>
-                    </ul>
-                </div>
-            </div>
+        <div class="violation-highlight obs-hidden anim-slide-up">
+            <h3><i class="fas fa-gavel"></i> 具體違反之審計準則</h3>
+            <p>根據《行政處罰決定書〔2026〕8号》，中審華會計師事務所出具了含有虛假記載的審計報告，構成未勤勉盡責。監管局明確指出其在多個環節，違反了以下具體審計準則：</p>
+            <ul style="list-style-type: none; padding-left: 1rem; margin-top: 1.5rem;">
+                <li>🔴 《中國註冊會計師審計準則第1101號——註冊會計師的總體目標和審計工作的基本要求》第二十八條。</li>
+                <li>🔴 《中國註冊會計師審計準則第1141號——財務報表審計中與舞弊相關的責任》第十三條。</li>
+                <li>🔴 《中國註冊會計師審計準則第1231號——針對評估的重大錯報風險採取的應對措施》第九條、第十七條。</li>
+                <li>🔴 《中國註冊會計師審計準則第1301號——審計證據》第十條、第十一條。</li>
+                <li>🔴 《中國註冊會計師審計準則第1312號——函證》第十四條、第十七條、第十八條、第十九條。</li>
+            </ul>
+        </div>
 
-            <div class="fraud-box" style="margin-top: 2rem; border-left-color: #22c55e;">
-                <h3>5. 存貨監盤與稅收核驗：防線流於形式 [cite: 61]</h3>
-                <p><strong>重點總結：</strong>在存貨監盤時，會計師未打開包裝查看內容物，讓公司用「空箱或二手硬體」冒充帳面存貨 [cite: 62]。在核驗稅單時，也未登錄網站或「掃描二維碼」查看，敗給了軟體偽造的稅收證明 [cite: 63]。</p>
-            </div>
-        </section>
-
-        <section>
-            <h2 class="section-title">⚖️ 五、相關會計、審計法令 [cite: 64]</h2>
-            <p>結合兩岸審計準則之具體規範與探討，方便讀者快速了解核心規範 [cite: 71]：</p>
-            <table>
-                <thead>
-                    <tr>
-                        <th>查核重點</th>
-                        <th>兩岸準則規範與本案探討</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td><strong>未保持職業懷疑</strong></td>
-                        <td>中國第1141號及台灣第240號均強調，應認識舞弊可能性，不受對管理層誠信判斷的影響 [cite: 72]。本案面對有錯別字的憑證卻未依規「對可能偽造的文件作進一步調查」，嚴重缺乏職業懷疑 [cite: 72]。</td>
-                    </tr>
-                    <tr>
-                        <td><strong>外部函證控制</strong></td>
-                        <td>中國第1312號規定實施函證時「應當對詢證函保持控制」，未回函應實施替代程序 [cite: 73]。本案不僅被攔截，對未回函客戶也「完全未執行替代測試」 [cite: 73]。</td>
-                    </tr>
-                    <tr>
-                        <td><strong>管理層凌駕控制</strong></td>
-                        <td>兩岸準則（中1141號、台240號）均將此視為「特別/顯著風險」，要求「測試日常會計分錄是否適當」 [cite: 74]。若落實測試，應能輕易發現時序邏輯錯誤 [cite: 74]。</td>
-                    </tr>
-                </tbody>
-            </table>
-            
-            <div style="background: #fee2e2; padding: 1.5rem; border-radius: 8px; border: 1px solid #fca5a5;">
-                <h4 style="margin-top: 0; color: #b91c1c;">🚨 具體違反之審計準則 [cite: 65]</h4>
-                <p>監管局明確指出中審華違反《證券法》及以下具體審計準則 [cite: 65]：</p>
-                <ul style="margin-bottom: 0;">
-                    <li>中國註冊會計師審計準則第 <strong>1101號</strong> 第二十八條 [cite: 66]</li>
-                    <li>第 <strong>1141號</strong> 第十三條 [cite: 67]</li>
-                    <li>第 <strong>1231號</strong> 第九條、第十七條 [cite: 68]</li>
-                    <li>第 <strong>1301號</strong> 第十條、第十一條 [cite: 69]</li>
-                    <li>第 <strong>1312號</strong> 第十四、十七、十八、十九條 [cite: 70]</li>
-                </ul>
-            </div>
-        </section>
-
-        <section>
-            <h2 class="section-title">👨‍⚖️ 六、會計師責任 [cite: 75]</h2>
-            <p>事務所與簽字會計師的行政處罰結果：根據《中國證券監督管理委員會深圳監管局行政處罰決定書〔2026〕8號》，監管局對中審華會計師事務所及其相關註冊會計師作出了重罰 [cite: 76]：</p>
+        <!-- ================= 六、會計師責任 ================= -->
+        <h2 class="section-title">六、會計師責任</h2>
+        
+        <p style="font-size: var(--text-lg-size); margin-bottom: 3rem; font-weight: bold;" class="obs-hidden anim-slide-up">事務所與簽字會計師的行政處罰結果 根據《中國證券監督管理委員會深圳監管局行政處罰決定書〔2026〕8號》，監管局作出了重罰：</p>
+        
+        <div class="accordion-wrapper obs-hidden anim-slide-up">
+            <details>
+                <summary><span>🏢 中審華會計師事務所</span></summary>
+                <div class="details-body">被責令改正，沒收業務收入 2,169,811.28 元，處以高達 10,849,056.40 元的罰款，並被暫停從事證券服務業務 6 個月。</div>
+            </details>
             
             <details>
-                <summary>🏢 中審華會計師事務所 [cite: 77]</summary>
-                <p>被責令改正，沒收業務收入 2,169,811.28 元，處以高達 10,849,056.40 元的罰款，並被暫停從事證券服務業務 6 個月 [cite: 77]。</p>
+                <summary><span>👨‍💼 吳英達（實質項目合伙人）</span></summary>
+                <div class="details-body">給予警告，處以 130 萬元罰款，並採取 5 年證券市場禁入措施。</div>
             </details>
+            
             <details>
-                <summary>👤 吳英達（實質項目合伙人） [cite: 78]</summary>
-                <p>給予警告，處以 130 萬元罰款，並採取 5 年證券市場禁入措施 [cite: 78]。</p>
+                <summary><span>👨‍💼 龔義華（簽字會計師）</span></summary>
+                <div class="details-body">給予警告，處以 100 萬元罰款，並採取 3 年證券市場禁入措施。</div>
             </details>
+            
             <details>
-                <summary>👤 龔義華（簽字會計師） [cite: 79]</summary>
-                <p>給予警告，處以 100 萬元罰款，並採取 3 年證券市場禁入措施 [cite: 79]。</p>
-            </details>
-            <details>
-                <summary>👤 譚新紅（簽字會計師） [cite: 80]</summary>
-                <p>給予警告，處以 80 萬元罰款，並採取 3 年證券市場禁入措施 [cite: 80]。</p>
+                <summary><span>👩‍💼 譚新紅（簽字會計師）</span></summary>
+                <div class="details-body">給予警告，處以 80 萬元罰款，並採取 3 年證券市場禁入措施。</div>
             </details>
 
-            <div style="margin-top: 1.5rem; padding: 1.5rem; background: #fffbeb; border-left: 5px solid #f59e0b; border-radius: 4px;">
-                雖然公司方與會計事務所用了許多方法嘗試為自己辯解，但只要會計師最終在含有虛假記載的審計報告上簽字，且在查核過程中被發現存在程序上的重大缺陷，就必須承擔未勤勉盡責的法律責任 [cite: 81]。
+            <div class="bg-block" style="padding: 3rem; margin-top: 4rem; border-radius: 20px; border-left: 15px solid var(--brand-highlight);">
+                <span style="color: var(--brand-highlight); font-weight: 900; font-size: 1.8rem;">💡 核心結論：</span><br><br>雖然公司方與會計事務所用了許多方法嘗試為自己辯解，但只要會計師最終在含有虛假記載的審計報告上簽字，且在查核過程中被發現存在程序上的重大缺陷，就必須承擔未勤勉盡責的法律責任。
             </div>
-        </section>
+        </div>
 
-        <section class="conclusion-text">
-            <h2 class="section-title">🎯 七、結論 [cite: 82]</h2>
-            <p>我們回到最一開始研究的問題，會計師還是可以透過查核得知錯誤的，但到底為什麼會計師會忽略呢?面對這種管理階層掌握內控更甚至竄改ERP系統後台，偽造出有許多的破綻的文件 [cite: 83]。</p>
-            
-            <p>我認為有兩個面向，第一就是會計師與事務所間的推託與妥協。主要簽字的會計師說:「系統性造假超出可識別範圍」、「有上報風險但因無決策權所以無法更改」，另一位會計師則推託說:「自己只負責第二級複查」，這反映審計團隊失去了獨立性、審計品質低下，更甚至對錯誤或者舞弊徵兆選擇了妥協與放水 [cite: 84]。</p>
-            
-            <p>第二個則是，沒有保持應有的職業上懷疑。當查核人員連憑證上的錯別字都未加深究，甚至對部分未回函客戶「完全未執行替代測試」。如果會計師只有盲目的相信書面文件，而不對異常的憑證外觀保持警覺，再嚴密的審計準則也形同虛設。最好自己也要假設管理階層可能越矩掌握內控，準備好對策 [cite: 85]。</p>
-        </section>
+        <!-- ================= 七、結論 (打字機動畫) ================= -->
+        <h2 class="section-title">七、結論</h2>
+        <div class="typewriter-box" id="tw-trigger">
+            <div id="tw-text"></div><div class="tw-cursor" id="tw-cursor"></div>
+        </div>
 
-        <section>
-            <h2 class="section-title">📚 八、參考文獻 [cite: 86]</h2>
+        <!-- ================= 八、參考文獻 ================= -->
+        <h2 class="section-title">八、參考文獻</h2>
+        <div class="ref-container obs-hidden anim-slide-up">
             <ul class="ref-list">
-                <li><a href="https://www.csrc.gov.cn/shenzhen/c104320/c7583642/content.shtml" target="_blank">https://www.csrc.gov.cn/shenzhen/c104320/c7583642/content.shtml</a> [cite: 87, 88]</li>
-                <li><a href="https://vip.stock.finance.sina.com.cn/corp/go.php/vCB_BulletinZhong/stockid/920680/page_type/zqbg.phtml" target="_blank">https://vip.stock.finance.sina.com.cn/corp/go.php/vCB_BulletinZhong/stockid/920680/page_type/zqbg.phtml</a> [cite: 89]</li>
-                <li><a href="https://vip.stock.finance.sina.com.cn/corp/view/vCB_AllBulletinDetail.php?stockid=920680&id=11426429" target="_blank">https://vip.stock.finance.sina.com.cn/corp/view/vCB_AllBulletinDetail.php?stockid=920680&id=11426429</a> [cite: 90]</li>
-                <li>《中國註冊會計師審計準則第1101號——註冊會計師的總體目標和審計工作的基本要求》 [cite: 91]</li>
-                <li>《中國註冊會計師審計準則第1141號——財務報表審計中與舞弊相關的責任》 [cite: 92]</li>
-                <li>《中國註冊會計師審計準則第1211號——重大錯報風險的識別和評估》 [cite: 93]</li>
-                <li>《中國註冊會計師審計準則第1231號——針對評估的重大錯報風險採取的應對措施》 [cite: 94]</li>
-                <li>《中國註冊會計師審計準則第1301號——審計證據》 [cite: 95]</li>
-                <li>《中國註冊會計師審計準則第1312號——函證》 [cite: 96]</li>
-                <li>審計準則240號 [cite: 97]</li>
-                <li>廣道數字 2024 年年度報告 [cite: 98]</li>
+                <li><i class="fas fa-link"></i> <span>https://www.csrc.gov.cn/shenzhen/c104320/c7583642/content.shtml</span></li>
+                <li><i class="fas fa-link"></i> <span>https://vip.stock.finance.sina.com.cn/corp/go.php/vCB_BulletinZhong/stockid/920680/page_type/zqbg.phtml</span></li>
+                <li><i class="fas fa-link"></i> <span>https://vip.stock.finance.sina.com.cn/corp/view/vCB_AllBulletinDetail.php?stockid=920680&id=11426429</span></li>
+                <li><i class="fas fa-book"></i> <span>《中國註冊會計師審計準則第1101號——註冊會計師的總體目標和審計工作的基本要求》</span></li>
+                <li><i class="fas fa-book"></i> <span>《中國註冊會計師審計準則第1141號——財務報表審計中與舞弊相關的責任》</span></li>
+                <li><i class="fas fa-book"></i> <span>《中國註冊會計師審計準則第1211號——重大錯報風險的識別和評估》</span></li>
+                <li><i class="fas fa-book"></i> <span>《中國註冊會計師審計準則第1231號——針對評估的重大錯報風險採取的應對措施》</span></li>
+                <li><i class="fas fa-book"></i> <span>《中國註冊會計師審計準則第1301號——審計證據》</span></li>
+                <li><i class="fas fa-book"></i> <span>《中國註冊會計師審計準則第1312號——函證》</span></li>
+                <li><i class="fas fa-book"></i> <span>審計準則240號</span></li>
+                <li><i class="fas fa-file-pdf"></i> <span>廣道數字 2024 年年度報告</span></li>
             </ul>
-        </section>
+        </div>
 
     </div>
 
+    <!-- ================= 九、頁尾分工 ================= -->
     <footer>
-        <p>九、組員分工 [cite: 99]：全部都我做的，但有AI幫忙協作(幫忙整理與歸納)，全文我都有閱讀且審閱過 [cite: 100]。</p>
-        <p style="opacity: 0.5;">林峻逸 | 報告專用網站</p>
+        <div class="member-note">九、組員分工：全部都我做的，但有AI幫忙協作(幫忙整理與歸納)，全文我都有閱讀且審閱過。<br><br>林峻逸</div>
     </footer>
 
+    <!-- ================= 互動特效腳本 ================= -->
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const observerOptions = { root: null, rootMargin: '0px', threshold: 0.15 };
+        document.addEventListener("DOMContentLoaded", () => {
             
-            const observer = new IntersectionObserver((entries, observer) => {
+            // 1. 滾動偵測動畫
+            const obsOptions = { root: null, rootMargin: '0px', threshold: 0.15 };
+            const observer = new IntersectionObserver((entries, obs) => {
                 entries.forEach(entry => {
                     if (entry.isIntersecting) {
-                        entry.target.classList.add('visible');
-                        observer.unobserve(entry.target);
+                        entry.target.classList.add('obs-visible');
+                        obs.unobserve(entry.target); 
                     }
                 });
-            }, observerOptions);
+            }, obsOptions);
 
-            // 觸發個案背景翻頁動畫
-            document.querySelectorAll('.animate-flip').forEach(el => observer.observe(el));
+            const animElements = document.querySelectorAll('.anim-flip, .anim-fly-left, .anim-fly-right, .anim-slide-up');
+            animElements.forEach(el => observer.observe(el));
+
+            // 2. 結論區打字機動畫
+            const twText = `我們回到最一開始研究的問題，會計師還是可以透過查核得知錯誤的，但到底為什麼會計師會忽略呢?面對這種管理階層掌握內控更甚至竄改ERP系統後台，偽造出有許多的破綻的文件。
+
+我認為有兩個面向，第一就是會計師與事務所間的推託與妥協。主要簽字的會計師說:「系統性造假超出可識別範圍」、「有上報風險但因無決策權所以無法更改」，另一位會計師則推託說:「自己只負責第二級複查」，這反映審計團隊失去了獨立性、審計品質低下，更甚至對錯誤或者舞弊徵兆選擇了妥協與放水。
+
+第二個則是，沒有保持應有的職業上懷疑。當查核人員連憑證上的錯別字都未加深究，甚至對部分未回函客戶「完全未執行替代測試」。如果會計師只有盲目的相信書面文件，而不對異常的憑證外觀保持警覺，再嚴密的審計準則也形同虛設。最好自己也要假設管理階層可能越矩掌握內控，準備好對策。`;
+
+            const twContainer = document.getElementById('tw-text');
+            const twTrigger = document.getElementById('tw-trigger');
+            const twCursor = document.getElementById('tw-cursor');
+            let isTyping = false;
+            let index = 0;
+
+            function typeWriter() {
+                if (index < twText.length) {
+                    twContainer.textContent += twText.charAt(index);
+                    index++;
+                    setTimeout(typeWriter, 35); 
+                } else {
+                    twCursor.style.display = 'none'; 
+                }
+            }
+
+            const twObserver = new IntersectionObserver((entries) => {
+                if (entries[0].isIntersecting && !isTyping) {
+                    isTyping = true;
+                    setTimeout(typeWriter, 500); 
+                    twObserver.disconnect();
+                }
+            }, { threshold: 0.3 });
+
+            twObserver.observe(twTrigger);
+
+            // 3. 互動列點排他性展開
+            const details = document.querySelectorAll('details');
+            details.forEach((targetDetail) => {
+                targetDetail.addEventListener('click', () => {
+                    details.forEach((detail) => {
+                        if (detail !== targetDetail) {
+                            detail.removeAttribute('open');
+                        }
+                    });
+                });
+            });
             
-            // 觸發研究問題左右飛入動畫
-            document.querySelectorAll('.fly-left, .fly-right').forEach(el => observer.observe(el));
-            
-            // 觸發時間軸滾動動畫
-            document.querySelectorAll('.animate-scroll').forEach(el => observer.observe(el));
         });
     </script>
 </body>
